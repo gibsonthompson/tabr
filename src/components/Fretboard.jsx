@@ -185,23 +185,6 @@ export default function Fretboard({ activeNotes, chordName, techniques }) {
           })}
         </svg>
 
-        {/* Robot hand */}
-        {activeNotes.filter(n => n.fret > 0 && n.type !== "mute").length > 0 && (() => {
-          const fretted = activeNotes.filter(n => n.fret > 0 && n.type !== "mute");
-          const af = fretted.reduce((s, n) => s + n.fret, 0) / fretted.length;
-          const as = fretted.reduce((s, n) => s + n.string, 0) / fretted.length;
-          const hx = (fx(Math.max(0, af - 1)) + fx(af)) / 2;
-          const hy = sy(as);
-          return (
-            <div className="robot-hand" style={{ left: `${(hx / W) * 100}%`, top: `${(hy / H) * 100 + 28}%` }}>
-              <div className="robot-wrist">
-                <div className="robot-led" />
-                <div className="robot-joint" style={{ top: 20 }} />
-                <div className="robot-joint" style={{ top: 30 }} />
-              </div>
-            </div>
-          );
-        })()}
       </div>
     </div>
   );

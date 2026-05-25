@@ -84,7 +84,7 @@ export const FINGER_COLORS = {
 
 export const FINGER_LABELS = { 0: "\u25CB", 1: "1", 2: "2", 3: "3", 4: "4" };
 
-export const STRING_COLORS = ["#E8D5B7","#E8D5B7","#C9B896","#D4A843","#D4A843","#C49A3C"];
+export const STRING_COLORS = ["#C8C0B8","#C8C0B8","#C8C0B8","#B8B0A8","#B8B0A8","#B8B0A8"];
 export const STRING_WIDTHS = [1.5, 1.8, 2.2, 2.6, 3.0, 3.4];
 
 // Technique colors (for markers/labels)
