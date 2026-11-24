@@ -5,11 +5,12 @@ import { NOTE_NAMES, STANDARD_STRINGS, noteAt, type NoteName } from '@/lib/music
 import { select } from '@/lib/haptics';
 import { colors, fonts, radius, space } from '@/lib/theme';
 import Fretboard, { type FretMark } from '@/components/Fretboard';
-import { BackHeader, Body, Panel, Screen, SectionTitle, Small } from '@/components/ui';
+import { BackHeader, Body, Columns, Panel, Screen, SectionTitle, Small, useWide } from '@/components/ui';
 
 const MAX_FRET = 15;
 
 export default function NoteFinder() {
+  const wide = useWide();
   const [note, setNote] = useState<NoteName>('A');
 
   const marks = useMemo<FretMark[]>(() => {
@@ -39,9 +40,9 @@ export default function NoteFinder() {
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
               style={{
-                flexBasis: '14%',
+                flexBasis: wide ? '6%' : '14%',
                 flexGrow: 1,
-                height: 50,
+                height: wide ? 56 : 50,
                 borderRadius: radius.md,
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -53,30 +54,34 @@ export default function NoteFinder() {
         })}
       </View>
 
-      <View style={{ marginVertical: space.xl, marginHorizontal: -4 }}>
-        <Fretboard marks={marks} minFrets={MAX_FRET} showNoteNames={false} />
-      </View>
+      <Columns flex={[2.2, 1]} style={{ marginTop: space.xl }}>
+        <View style={{ marginHorizontal: -4, marginBottom: wide ? 0 : space.xl }}>
+          <Fretboard marks={marks} minFrets={MAX_FRET} showNoteNames={false} />
+        </View>
 
-      <Panel>
-        {STANDARD_STRINGS.map((s, i) => {
-          const frets = marks.filter((m) => m.string === i).map((m) => (m.fret === 0 ? 'open' : String(m.fret)));
-          return (
-            <View key={s.num} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, gap: space.md }}>
-              <Text style={{ fontFamily: fonts.heading, color: colors.text, fontSize: 16, width: 64 }}>
-                {s.num} {s.name}
-              </Text>
-              <Text style={{ fontFamily: fonts.mono, color: colors.textMuted, fontSize: 14, flex: 1 }}>{frets.join('  ')}</Text>
-            </View>
-          );
-        })}
-      </Panel>
+        <View>
+          <Panel>
+            {STANDARD_STRINGS.map((s, i) => {
+              const frets = marks.filter((m) => m.string === i).map((m) => (m.fret === 0 ? 'open' : String(m.fret)));
+              return (
+                <View key={s.num} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, gap: space.md }}>
+                  <Text style={{ fontFamily: fonts.heading, color: colors.text, fontSize: 16, width: 64 }}>
+                    {s.num} {s.name}
+                  </Text>
+                  <Text style={{ fontFamily: fonts.mono, color: colors.textMuted, fontSize: 14, flex: 1 }}>{frets.join('  ')}</Text>
+                </View>
+              );
+            })}
+          </Panel>
 
-      <SectionTitle>Why It Repeats</SectionTitle>
-      <Body muted>
-        Twelve frets is one full octave, so every note shows up again 12 frets higher.
-        {marks.some((m) => m.fret === 0) ? ` ${note} is an open string, so amber marks it open and again at fret 12.` : ''}
-      </Body>
-      <Small style={{ marginTop: space.md }}>Shown in standard tuning.</Small>
+          <SectionTitle>Why It Repeats</SectionTitle>
+          <Body muted>
+            Twelve frets is one full octave, so every note shows up again 12 frets higher.
+            {marks.some((m) => m.fret === 0) ? ` ${note} is an open string, so amber marks it open and again at fret 12.` : ''}
+          </Body>
+          <Small style={{ marginTop: space.md }}>Shown in standard tuning.</Small>
+        </View>
+      </Columns>
     </Screen>
   );
 }

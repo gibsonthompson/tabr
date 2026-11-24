@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Linking, ScrollView, Text, View } from 'react-native';
+import { Linking, Platform, ScrollView, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { TUNINGS } from '@/lib/music/tunings';
 import { centsBetween, nearestNote } from '@/lib/music/pitch';
@@ -7,7 +7,7 @@ import { usePitch } from '@/lib/music/usePitch';
 import { success } from '@/lib/haptics';
 import { colors, fonts, space } from '@/lib/theme';
 import Headstock from '@/components/Headstock';
-import { BackHeader, Body, Button, Pill, Row, Screen, Small } from '@/components/ui';
+import { BackHeader, Body, Button, Columns, Panel, Pill, Row, Screen, Small, useWide } from '@/components/ui';
 
 const IN_TUNE = 5;
 const CLOSE = 15;
@@ -48,6 +48,7 @@ function CentsMeter({ cents }: { cents: number | null }) {
 
 export default function Tuner() {
   const { state, hz, error, start, stop } = usePitch();
+  const wide = useWide();
   const [tuningId, setTuningId] = useState('standard');
   const [locked, setLocked] = useState<number | null>(null);
   const tuning = TUNINGS.find((t) => t.id === tuningId)!;
@@ -101,29 +102,25 @@ export default function Tuner() {
           ? 'Too low, tighten the string'
           : 'Too high, loosen the string';
 
-  return (
-    <Screen edges={['top', 'bottom']}>
-      <BackHeader title="Tuner" sub={`${tuning.name}: ${tuning.notesLowToHigh}`} onBack={() => router.back()} />
+  const pills = TUNINGS.map((t) => (
+    <Pill
+      key={t.id}
+      label={t.name}
+      active={t.id === tuningId}
+      onPress={() => {
+        setTuningId(t.id);
+        setLocked(null);
+      }}
+    />
+  ));
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
-        {TUNINGS.map((t) => (
-          <Pill
-            key={t.id}
-            label={t.name}
-            active={t.id === tuningId}
-            onPress={() => {
-              setTuningId(t.id);
-              setLocked(null);
-            }}
-          />
-        ))}
-      </ScrollView>
-
-      <View style={{ alignItems: 'center', marginTop: space.xl, height: 150, justifyContent: 'center' }}>
+  const readout = (
+    <>
+      <View style={{ alignItems: 'center', marginTop: space.xl, height: wide ? 190 : 150, justifyContent: 'center' }}>
         {reading ? (
           <>
             <Text
-              style={{ fontFamily: fonts.display, fontSize: 112, lineHeight: 118, letterSpacing: -4, color: statusColor(reading.cents) }}
+              style={{ fontFamily: fonts.display, fontSize: wide ? 150 : 112, lineHeight: wide ? 156 : 118, letterSpacing: -4, color: statusColor(reading.cents) }}
               accessibilityLabel={`Hearing ${reading.heard.name}${reading.heard.octave}`}>
               {reading.heard.name}
             </Text>
@@ -133,7 +130,7 @@ export default function Tuner() {
           </>
         ) : (
           <Text
-            style={{ fontFamily: fonts.display, fontSize: 40, letterSpacing: 2, color: listening ? colors.textMuted : colors.textFaint, textAlign: 'center' }}
+            style={{ fontFamily: fonts.display, fontSize: wide ? 52 : 40, letterSpacing: 2, color: listening ? colors.textMuted : colors.textFaint, textAlign: 'center' }}
             accessibilityLabel={`${tuning.name}: ${tuning.notesLowToHigh}`}>
             {tuning.notesLowToHigh}
           </Text>
@@ -147,18 +144,32 @@ export default function Tuner() {
         accessibilityLiveRegion="polite">
         {instruction}
       </Text>
+    </>
+  );
 
+  const headstock = (
+    <>
       <Headstock strings={tuning.strings} states={states} onPress={(i) => setLocked(locked === i ? null : i)} />
       <Small style={{ textAlign: 'center', marginTop: space.md }}>
         {locked === null ? 'Detects the string automatically. Tap a peg to lock one.' : `Locked to string ${locked + 1}. Tap it again to go back to automatic.`}
       </Small>
+    </>
+  );
 
+  const controls = (
+    <>
       {state === 'denied' ? (
         <View style={{ marginTop: space.xl }}>
           <Body muted style={{ textAlign: 'center', marginBottom: space.md }}>
-            Microphone access is off. Turn it on in Settings so the tuner can hear your guitar.
+            {Platform.OS === 'web'
+              ? 'Microphone access is blocked. Allow it from the icon in your browser\'s address bar, then press Try Again.'
+              : 'Microphone access is off. Turn it on in Settings so the tuner can hear your guitar.'}
           </Body>
-          <Button title="Open Settings" kind="secondary" onPress={() => Linking.openSettings()} />
+          {Platform.OS === 'web' ? (
+            <Button title="Try Again" kind="secondary" onPress={start} />
+          ) : (
+            <Button title="Open Settings" kind="secondary" onPress={() => Linking.openSettings()} />
+          )}
         </View>
       ) : (
         <Button
@@ -166,11 +177,43 @@ export default function Tuner() {
           kind={listening ? 'secondary' : 'primary'}
           loading={state === 'starting'}
           onPress={listening ? stop : start}
-          style={{ marginTop: space.xl }}
+          style={{ marginTop: wide ? 0 : space.xl }}
         />
       )}
       {error ? <Body style={{ color: colors.stop, textAlign: 'center', marginTop: space.md }}>{error}</Body> : null}
-      <Small style={{ textAlign: 'center', marginTop: space.lg }}>Sound stays on your phone. Nothing is recorded.</Small>
+      <Small style={{ textAlign: 'center', marginTop: space.lg }}>Sound is analyzed on your device. Nothing is recorded.</Small>
+    </>
+  );
+
+  return (
+    <Screen edges={['top', 'bottom']}>
+      <BackHeader title="Tuner" sub={`${tuning.name}: ${tuning.notesLowToHigh}`} onBack={() => router.back()} />
+
+      {wide ? (
+        <Row gap={space.sm} wrap>
+          {pills}
+        </Row>
+      ) : (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
+          {pills}
+        </ScrollView>
+      )}
+
+      {wide ? (
+        <Columns flex={[1.3, 1]} style={{ marginTop: space.lg }}>
+          <Panel style={{ padding: space.xl }}>
+            {readout}
+            {controls}
+          </Panel>
+          <Panel style={{ padding: space.xl, paddingVertical: space.xxl }}>{headstock}</Panel>
+        </Columns>
+      ) : (
+        <>
+          {readout}
+          {headstock}
+          {controls}
+        </>
+      )}
     </Screen>
   );
 }

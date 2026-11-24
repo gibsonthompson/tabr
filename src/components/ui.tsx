@@ -7,6 +7,7 @@ import {
   Text,
   TextInput,
   View,
+  useWindowDimensions,
   type StyleProp,
   type TextInputProps,
   type TextStyle,
@@ -16,6 +17,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Defs, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { colors, fonts, radius, space } from '@/lib/theme';
 import { select, tap } from '@/lib/haptics';
+
+/** Desktop breakpoint. At or above this width the app uses the sidebar and multi-column layouts. */
+export const WIDE = 960;
+
+export function useWide() {
+  return useWindowDimensions().width >= WIDE;
+}
 
 export function Screen({
   children,
@@ -28,7 +36,8 @@ export function Screen({
   edges?: ('top' | 'bottom')[];
   padded?: boolean;
 }) {
-  const content = [padded && styles.content];
+  const wide = useWide();
+  const content = [padded && styles.content, padded && wide && styles.contentWide];
   return (
     <SafeAreaView style={styles.screen} edges={edges ?? ['top']}>
       <Burst />
@@ -63,11 +72,12 @@ function Burst() {
 
 /** Big screen title. Optional line above (date, greeting) and a right-side slot. */
 export function Header({ title, kicker, right }: { title: string; kicker?: string; right?: ReactNode }) {
+  const wide = useWide();
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, wide && { marginBottom: space.xxl }]}>
       <View style={{ flex: 1 }}>
         {kicker ? <Text style={styles.kicker}>{kicker}</Text> : null}
-        <Text style={styles.title} accessibilityRole="header" numberOfLines={2}>
+        <Text style={[styles.title, wide && styles.titleWide]} accessibilityRole="header" numberOfLines={2}>
           {title}
         </Text>
       </View>
@@ -78,6 +88,7 @@ export function Header({ title, kicker, right }: { title: string; kicker?: strin
 
 /** Title row for screens pushed onto a stack: back control above a big title. */
 export function BackHeader({ title, sub, onBack }: { title: string; sub?: string; onBack: () => void }) {
+  const wide = useWide();
   return (
     <View style={{ marginBottom: space.lg }}>
       <Pressable
@@ -91,7 +102,7 @@ export function BackHeader({ title, sub, onBack }: { title: string; sub?: string
         </Svg>
         <Text style={{ color: colors.textMuted, fontSize: 16, fontWeight: '600', marginLeft: 6 }}>Tools</Text>
       </Pressable>
-      <Text style={styles.title} accessibilityRole="header">
+      <Text style={[styles.title, wide && styles.titleWide]} accessibilityRole="header">
         {title}
       </Text>
       {sub ? <Text style={[styles.kicker, { marginTop: 4 }]}>{sub}</Text> : null}
@@ -99,9 +110,10 @@ export function BackHeader({ title, sub, onBack }: { title: string; sub?: string
   );
 }
 
-export function SectionTitle({ children, right }: { children: string; right?: ReactNode }) {
+/** Section heading. `flush` drops the top margin, for the first heading in a column. */
+export function SectionTitle({ children, right, flush }: { children: string; right?: ReactNode; flush?: boolean }) {
   return (
-    <View style={styles.sectionRow}>
+    <View style={[styles.sectionRow, flush && { marginTop: 0 }]}>
       <Text style={styles.section} accessibilityRole="header">
         {children}
       </Text>
@@ -258,19 +270,57 @@ export function Loading() {
   return <ActivityIndicator color={colors.textMuted} style={{ marginTop: space.huge }} />;
 }
 
-/** Two columns. An odd last item spans the full row. */
-export function Grid2({ children, gap = space.md }: { children: ReactNode[]; gap?: number }) {
+/**
+ * Balanced grid: `cols` per row on phones, `wideCols` on desktop.
+ * Items in a short last row stretch to fill it, so nothing sits alone with empty space beside it.
+ */
+export function Grid({ children, cols = 2, wideCols, gap = space.md }: { children: ReactNode[]; cols?: number; wideCols?: number; gap?: number }) {
+  const wide = useWide();
+  const n = wide ? (wideCols ?? cols) : cols;
   const items = children.filter(Boolean);
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap }}>
-      {items.map((child, i) => {
-        const lastOdd = items.length % 2 === 1 && i === items.length - 1;
-        return (
-          <View key={i} style={lastOdd ? { width: '100%' } : { flexBasis: '40%', flexGrow: 1 }}>
-            {child}
-          </View>
-        );
-      })}
+      {items.map((child, i) => (
+        <View key={i} style={{ flexBasis: `${100 / n - 4}%`, flexGrow: 1, minWidth: 0 }}>
+          {child}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/** Two columns. An odd last item spans the full row. */
+export function Grid2({ children, gap = space.md, wideCols }: { children: ReactNode[]; gap?: number; wideCols?: number }) {
+  return (
+    <Grid cols={2} wideCols={wideCols} gap={gap}>
+      {children}
+    </Grid>
+  );
+}
+
+/**
+ * Side by side on desktop, stacked on phones.
+ * `flex` sets each column's relative width, e.g. [3, 2].
+ */
+export function Columns({ children, flex = [], gap = space.xxl, style }: { children: ReactNode[]; flex?: number[]; gap?: number; style?: StyleProp<ViewStyle> }) {
+  const wide = useWide();
+  const items = children.filter(Boolean);
+  if (!wide) {
+    return (
+      <View style={style}>
+        {items.map((c, i) => (
+          <View key={i}>{c}</View>
+        ))}
+      </View>
+    );
+  }
+  return (
+    <View style={[{ flexDirection: 'row', alignItems: 'flex-start', gap }, style]}>
+      {items.map((c, i) => (
+        <View key={i} style={{ flex: flex[i] ?? 1, minWidth: 0 }}>
+          {c}
+        </View>
+      ))}
     </View>
   );
 }
@@ -288,9 +338,11 @@ export const textStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   content: { paddingHorizontal: space.xl - 4, paddingTop: space.md, paddingBottom: space.huge * 2 },
+  contentWide: { paddingHorizontal: space.huge, paddingTop: space.huge - 8, width: '100%', maxWidth: 1280, alignSelf: 'center' },
   header: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: space.xl, gap: space.md },
   kicker: { color: colors.textMuted, fontSize: 15, marginBottom: 2 },
   title: { fontFamily: fonts.display, color: colors.text, fontSize: 40, lineHeight: 44, letterSpacing: -1.6 },
+  titleWide: { fontSize: 54, lineHeight: 58, letterSpacing: -2.2 },
   sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: space.xl, marginBottom: space.md },
   section: { fontFamily: fonts.heading, color: colors.text, fontSize: 20, letterSpacing: -0.4 },
   body: { color: colors.text, fontSize: 16, lineHeight: 23 },

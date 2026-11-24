@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { confirmAction } from '@/lib/confirm';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import type { Profile } from '@/lib/db';
 import { success, warn } from '@/lib/haptics';
 import { colors, fonts, space } from '@/lib/theme';
-import { Body, Button, ErrorText, Field, Loading, Panel, Screen, SectionTitle, Segmented, Small } from '@/components/ui';
+import { Body, Button, Columns, ErrorText, Field, Loading, Panel, Screen, SectionTitle, Segmented, Small, useWide } from '@/components/ui';
 
 const DAYS = [1, 2, 3, 4, 5, 6, 7].map((d) => ({ value: d, label: String(d) }));
 const MINUTES = [10, 15, 20, 30, 45, 60].map((m) => ({ value: m, label: String(m) }));
@@ -18,6 +19,7 @@ const toList = (s: string) =>
 
 export default function Account() {
   const { session } = useAuth();
+  const wide = useWide();
   const [loaded, setLoaded] = useState(false);
   const [name, setName] = useState('');
   const [days, setDays] = useState<number | null>(null);
@@ -70,12 +72,14 @@ export default function Account() {
     }
   }
 
-  function confirmDelete() {
+  async function confirmDelete() {
     warn();
-    Alert.alert('Delete your account?', 'This permanently deletes your profile, songs, practice history and progress. It cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete Account', style: 'destructive', onPress: deleteAccount },
-    ]);
+    const ok = await confirmAction(
+      'Delete your account?',
+      'This permanently deletes your profile, songs, practice history and progress. It cannot be undone.',
+      'Delete Account',
+    );
+    if (ok) deleteAccount();
   }
 
   async function deleteAccount() {
@@ -95,31 +99,37 @@ export default function Account() {
   return (
     <Screen edges={['bottom']}>
       <View style={{ marginBottom: space.lg }}>
-        <Text style={{ fontFamily: fonts.display, color: colors.text, fontSize: 30, letterSpacing: -1 }}>{name || 'Your profile'}</Text>
+        <Text style={{ fontFamily: fonts.display, color: colors.text, fontSize: wide ? 44 : 30, letterSpacing: -1 }}>{name || 'Your Profile'}</Text>
         <Small style={{ color: colors.textMuted }}>{session?.user.email ?? ''}</Small>
       </View>
 
-      <Field label="Name" value={name} onChangeText={setName} placeholder="What should we call you?" />
+      <Columns flex={[1, 1]} gap={space.huge}>
+        <View>
+          <Field label="Name" value={name} onChangeText={setName} placeholder="What should we call you?" />
 
-      <SectionTitle>Practice Time</SectionTitle>
-      <Text style={{ color: colors.textMuted, fontSize: 14, fontWeight: '600', marginBottom: space.sm }}>Days a week</Text>
-      <Segmented options={DAYS} value={days} onChange={setDays} />
-      <Text style={{ color: colors.textMuted, fontSize: 14, fontWeight: '600', marginTop: space.lg, marginBottom: space.sm }}>Minutes per session</Text>
-      <Segmented options={MINUTES} value={minutes} onChange={setMinutes} />
+          <SectionTitle>Practice Time</SectionTitle>
+          <Text style={{ color: colors.textMuted, fontSize: 14, fontWeight: '600', marginBottom: space.sm }}>Days a week</Text>
+          <Segmented options={DAYS} value={days} onChange={setDays} />
+          <Text style={{ color: colors.textMuted, fontSize: 14, fontWeight: '600', marginTop: space.lg, marginBottom: space.sm }}>Minutes per session</Text>
+          <Segmented options={MINUTES} value={minutes} onChange={setMinutes} />
+        </View>
 
-      <SectionTitle>Your Music</SectionTitle>
-      <Field label="Genres you love" value={genres} onChangeText={setGenres} placeholder="Blues, classic rock" hint="Separate with commas." />
-      <Field label="Players you want to sound like" value={artists} onChangeText={setArtists} placeholder="Stevie Ray Vaughan, Angus Young" />
-      <Field label="What do you want to be able to play?" value={ambitions} onChangeText={setAmbitions} placeholder="Solo over a 12-bar blues" multiline />
+        <View>
+          <SectionTitle flush={wide}>Your Music</SectionTitle>
+          <Field label="Genres you love" value={genres} onChangeText={setGenres} placeholder="Blues, classic rock" hint="Separate with commas." />
+          <Field label="Players you want to sound like" value={artists} onChangeText={setArtists} placeholder="Stevie Ray Vaughan, Angus Young" />
+          <Field label="What do you want to be able to play?" value={ambitions} onChangeText={setAmbitions} placeholder="Solo over a 12-bar blues" multiline />
+        </View>
+      </Columns>
 
       <ErrorText>{error}</ErrorText>
       {saved ? <Body style={{ color: colors.green, marginBottom: space.md }}>Profile saved.</Body> : null}
-      <Button title="Save Profile" onPress={save} loading={saving} />
+      <Button title="Save Profile" onPress={save} loading={saving} style={wide ? { alignSelf: 'flex-start', minWidth: 240, marginTop: space.md } : undefined} />
 
       <SectionTitle>Account</SectionTitle>
-      <Panel style={{ gap: space.sm }}>
-        <Button title="Sign Out" kind="secondary" onPress={() => supabase.auth.signOut()} />
-        <Button title="Delete Account" kind="danger" onPress={confirmDelete} loading={deleting} />
+      <Panel style={wide ? { flexDirection: 'row', gap: space.md, alignItems: 'center' } : { gap: space.sm }}>
+        <Button title="Sign Out" kind="secondary" onPress={() => supabase.auth.signOut()} style={wide ? { minWidth: 180 } : undefined} />
+        <Button title="Delete Account" kind="danger" onPress={confirmDelete} loading={deleting} style={wide ? { minWidth: 180 } : undefined} />
       </Panel>
     </Screen>
   );

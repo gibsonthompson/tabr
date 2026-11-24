@@ -21,7 +21,10 @@ type Props = {
 const LABEL_W = 26;
 const OPEN_W = 24;
 const PAD_TOP = 22;
-const PAD_BOTTOM = 46;
+// Space under the neck for its side edge and the fret numbers.
+const BELOW_NECK = 30;
+// Past this width the drawing scales up evenly instead of stretching, so dots and labels grow with the board.
+const MAX_LOGICAL_W = 440;
 const SINGLE_INLAYS = [3, 5, 7, 9, 15, 17, 19];
 
 /**
@@ -34,12 +37,16 @@ export default function Fretboard({ notes = [], mutedStrings = [], marks = [], m
 
   const highest = Math.max(0, ...notes.map((n) => Math.max(n.fret, n.bendTo ?? 0)), ...marks.map((m) => m.fret));
   const frets = Math.min(20, Math.max(minFrets, highest + 1));
-  const height = Math.max(200, Math.round(width * 0.56));
+  const lw = Math.min(width, MAX_LOGICAL_W);
+  // Phones get a taller board; wider boards use a flatter ratio so the neck doesn't dominate the page.
+  const height = Math.max(200, Math.round(lw * (lw >= 400 ? 0.5 : 0.56)));
+  const scaleUp = width / Math.max(1, lw);
 
   const nutX = LABEL_W + OPEN_W;
-  const endX = width - 4;
+  const endX = lw - 4;
   const top = PAD_TOP;
-  const bottom = height - PAD_BOTTOM;
+  // The near edge sits past the 6th string (depth 1.1); keep it and the fret numbers inside the drawing.
+  const bottom = top + (height - top - BELOW_NECK) / (1.1 * (0.8 + 0.2 * 1.1));
   const cx = (nutX + endX) / 2;
 
   // depth: 0 = far (1st string), 1 = near (6th string)
@@ -69,7 +76,7 @@ export default function Fretboard({ notes = [], mutedStrings = [], marks = [], m
   return (
     <View onLayout={onLayout} accessible accessibilityRole="image" accessibilityLabel={describe ? `Fretboard: ${describe}` : 'Fretboard'}>
       {width > 0 && (
-        <Svg width={width} height={height}>
+        <Svg width={width} height={height * scaleUp} viewBox={`0 0 ${lw} ${height}`}>
           <Defs>
             <LinearGradient id="board" x1="0" y1="0" x2="0" y2="1">
               <Stop offset="0" stopColor="#3A2117" />
@@ -87,7 +94,7 @@ export default function Fretboard({ notes = [], mutedStrings = [], marks = [], m
 
           {/* Trapezoid pearl inlays */}
           {[...SINGLE_INLAYS, 12].filter((f, i, a) => f <= frets && a.indexOf(f) === i).map((f) => {
-            const w = (flatX(f) - flatX(f - 1)) * 0.17;
+            const w = (flatX(f) - flatX(f - 1)) * 0.14;
             const m = fretMid(f);
             const pts = [pt(m - w * 0.75, 0.3), pt(m + w * 0.75, 0.3), pt(m + w, 0.7), pt(m - w, 0.7)].join(' ');
             return <Polygon key={`in${f}`} points={pts} fill={colors.pearl} opacity={0.42} />;

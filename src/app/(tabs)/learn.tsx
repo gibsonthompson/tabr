@@ -4,7 +4,7 @@ import { useFocusEffect } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { MASTERY_LABELS, type MasteryLevel, type Skill } from '@/lib/db';
 import { colors, fonts, radius, space } from '@/lib/theme';
-import { Body, ErrorText, Header, Loading, Panel, Screen, SectionTitle, Small } from '@/components/ui';
+import { Body, ErrorText, Grid, Header, Loading, Panel, Screen, SectionTitle, Small, useWide } from '@/components/ui';
 
 const LADDER: { level: MasteryLevel; color: string; what: string }[] = [
   { level: 'exposure', color: colors.surfaceHigh, what: "You've had it explained and heard it." },
@@ -34,7 +34,36 @@ function LevelBar({ level }: { level: MasteryLevel }) {
   );
 }
 
+function Step({ index, level, color, what, wide }: { index: number; level: MasteryLevel; color: string; what: string; wide: boolean }) {
+  const badge = (
+    <View style={{ width: 44, height: 44, borderRadius: radius.md, backgroundColor: color, alignItems: 'center', justifyContent: 'center' }}>
+      <Text style={{ fontFamily: fonts.display, fontSize: 20, color: index === 0 ? colors.text : colors.ink }}>{index + 1}</Text>
+    </View>
+  );
+  if (wide) {
+    return (
+      <View style={{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: space.lg, gap: space.md, height: '100%' }}>
+        {badge}
+        <View>
+          <Text style={{ fontFamily: fonts.heading, color: colors.text, fontSize: 17, marginBottom: 2 }}>{MASTERY_LABELS[level]}</Text>
+          <Small style={{ color: colors.textMuted }}>{what}</Small>
+        </View>
+      </View>
+    );
+  }
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: space.md, gap: space.md }}>
+      {badge}
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontFamily: fonts.heading, color: colors.text, fontSize: 17 }}>{MASTERY_LABELS[level]}</Text>
+        <Small style={{ color: colors.textMuted }}>{what}</Small>
+      </View>
+    </View>
+  );
+}
+
 export default function Learn() {
+  const wide = useWide();
   const [skills, setSkills] = useState<Skill[] | null>(null);
   const [mastery, setMastery] = useState<Record<string, MasteryLevel>>({});
   const [error, setError] = useState<string | null>(null);
@@ -83,40 +112,34 @@ export default function Learn() {
 
           <SectionTitle>How Progress Works</SectionTitle>
           <Body muted style={{ marginBottom: space.lg }}>
-            Finishing a lesson doesn't move you up. Showing the skill does. Every skill climbs the same five steps.
+            {"Finishing a lesson doesn't move you up. Showing the skill does. Every skill climbs the same five steps."}
           </Body>
-          {LADDER.map((l, i) => (
-            <View key={l.level} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: space.md, gap: space.md }}>
-              <View
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: radius.md,
-                  backgroundColor: l.color,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                <Text style={{ fontFamily: fonts.display, fontSize: 20, color: i === 0 ? colors.text : colors.ink }}>{i + 1}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: fonts.heading, color: colors.text, fontSize: 17 }}>{MASTERY_LABELS[l.level]}</Text>
-                <Small style={{ color: colors.textMuted }}>{l.what}</Small>
-              </View>
+          {wide ? (
+            <View style={{ flexDirection: 'row', gap: space.md, alignItems: 'stretch' }}>
+              {LADDER.map((l, i) => (
+                <View key={l.level} style={{ flex: 1 }}>
+                  <Step index={i} level={l.level} color={l.color} what={l.what} wide />
+                </View>
+              ))}
             </View>
-          ))}
+          ) : (
+            LADDER.map((l, i) => <Step key={l.level} index={i} level={l.level} color={l.color} what={l.what} wide={false} />)
+          )}
         </>
       ) : (
         Object.entries(byDomain).map(([domain, list]) => (
           <View key={domain}>
             <SectionTitle>{domain.charAt(0).toUpperCase() + domain.slice(1)}</SectionTitle>
+            <Grid cols={1} wideCols={3}>
             {list.map((s) => (
-              <Panel key={s.id} style={{ marginBottom: space.md }}>
+              <Panel key={s.id} style={{ height: '100%' }}>
                 <Text style={{ fontFamily: fonts.heading, color: colors.text, fontSize: 18, marginBottom: 4 }}>{s.name}</Text>
                 {s.summary ? <Body muted style={{ marginBottom: space.md }}>{s.summary}</Body> : null}
                 <LevelBar level={mastery[s.id] ?? 'not_started'} />
                 <Small style={{ marginTop: space.sm }}>{MASTERY_LABELS[mastery[s.id] ?? 'not_started']}</Small>
               </Panel>
             ))}
+            </Grid>
           </View>
         ))
       )}

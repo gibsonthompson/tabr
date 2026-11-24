@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
-import { Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { Text, View } from 'react-native';
+import { Platform, Pressable, Text, View } from 'react-native';
 import {
   BricolageGrotesque_600SemiBold,
   BricolageGrotesque_700Bold,
@@ -37,7 +37,26 @@ function RootNavigator() {
       }}>
       <Stack.Protected guard={!!session}>
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="account" options={{ headerShown: true, title: 'Profile', presentation: 'modal' }} />
+        <Stack.Screen
+          name="account"
+          options={{
+            headerShown: true,
+            title: 'Profile',
+            presentation: 'modal',
+            // Browsers have no swipe-to-close, so give the page a way back into the app.
+            headerLeft:
+              Platform.OS === 'web'
+                ? () => (
+                    <Pressable
+                      onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+                      accessibilityRole="button"
+                      style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
+                      <Text style={{ color: colors.textMuted, fontSize: 16, fontWeight: '600' }}>{'‹ Back'}</Text>
+                    </Pressable>
+                  )
+                : undefined,
+          }}
+        />
       </Stack.Protected>
       <Stack.Protected guard={!session}>
         <Stack.Screen name="sign-in" />
@@ -54,7 +73,7 @@ function SetupMissing() {
     <View style={{ flex: 1, backgroundColor: colors.bg, justifyContent: 'center', padding: 28 }}>
       <Text style={{ fontFamily: fonts.display, color: colors.text, fontSize: 30, marginBottom: 10 }}>Almost ready</Text>
       <Text style={{ color: colors.textMuted, fontSize: 16, lineHeight: 23 }}>
-        The app can't reach its database yet. Copy .env.example to .env, add the Supabase URL and publishable key, then restart the dev server.
+        {"The app can't reach its database yet. Copy .env.example to .env, add the Supabase URL and publishable key, then restart the dev server."}
       </Text>
     </View>
   );

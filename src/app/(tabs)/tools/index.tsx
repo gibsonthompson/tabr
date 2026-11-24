@@ -3,7 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 import { router, type Href } from 'expo-router';
 import { colors, fonts, radius, space } from '@/lib/theme';
 import { ChordGlyph, NotesGlyph, TabGlyph, TunerGlyph } from '@/components/brand';
-import { Grid2, Header, Screen, Small } from '@/components/ui';
+import { Grid2, Header, Screen, Small, useWide } from '@/components/ui';
 
 const TOOLS: { href: Href; name: string; desc: string; glyph: ReactNode }[] = [
   { href: '/tools/tuner', name: 'Tuner', desc: 'Standard plus six alternate tunings', glyph: <TunerGlyph size={52} /> },
@@ -13,27 +13,31 @@ const TOOLS: { href: Href; name: string; desc: string; glyph: ReactNode }[] = [
 ];
 
 export default function Tools() {
+  const wide = useWide();
   return (
     <Screen>
       <Header title="Tools" />
-      <Grid2>
+      <Grid2 wideCols={4} gap={wide ? space.lg : space.md}>
         {TOOLS.map((t) => (
           <Pressable
             key={t.name}
             onPress={() => router.push(t.href)}
             accessibilityRole="button"
             accessibilityLabel={`${t.name}. ${t.desc}`}
-            style={({ pressed }) => ({
-              backgroundColor: colors.surface,
+            style={(st) => {
+              const { pressed, hovered } = st as { pressed: boolean; hovered?: boolean };
+              return {
+              backgroundColor: hovered ? colors.surfaceHigh : colors.surface,
               borderRadius: radius.lg,
-              padding: space.lg,
-              minHeight: 176,
+              padding: wide ? space.xl : space.lg,
+              minHeight: wide ? 240 : 176,
               justifyContent: 'space-between',
               transform: [{ scale: pressed ? 0.98 : 1 }],
-            })}>
+              };
+            }}>
             <View>{t.glyph}</View>
             <View>
-              <Text style={{ fontFamily: fonts.heading, color: colors.text, fontSize: 21, letterSpacing: -0.4, marginBottom: 2 }}>{t.name}</Text>
+              <Text style={{ fontFamily: fonts.heading, color: colors.text, fontSize: wide ? 24 : 21, letterSpacing: -0.4, marginBottom: 2 }}>{t.name}</Text>
               <Small>{t.desc}</Small>
             </View>
           </Pressable>

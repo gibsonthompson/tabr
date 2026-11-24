@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+import { confirmAction } from '@/lib/confirm';
 import { router, useFocusEffect } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
@@ -10,7 +11,7 @@ import { colors, fonts, radius, space } from '@/lib/theme';
 import PracticeRing from '@/components/PracticeRing';
 import WeekBars from '@/components/WeekBars';
 import { ChordGlyph, TunerGlyph } from '@/components/brand';
-import { Body, Button, ErrorText, Field, Header, Panel, Row, Screen, SectionTitle, Small } from '@/components/ui';
+import { Body, Button, Columns, ErrorText, Field, Header, Panel, Row, Screen, SectionTitle, Small, useWide } from '@/components/ui';
 
 const ACTIVE_KEY = 'tabr.activePractice';
 type Active = { startedAt: number; planned: number | null };
@@ -53,8 +54,9 @@ function QuickTool({ title, sub, glyph, onPress }: { title: string; sub: string;
 
 export default function Today() {
   const { session } = useAuth();
+  const wide = useWide();
   const [active, setActive] = useState<Active | null>(() => readActive());
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -100,19 +102,11 @@ export default function Today() {
     setError(null);
   }
 
-  function discard() {
-    Alert.alert('Discard this session?', "This time won't be saved.", [
-      { text: 'Keep Going', style: 'cancel' },
-      {
-        text: 'Discard',
-        style: 'destructive',
-        onPress: () => {
-          localStorage.removeItem(ACTIVE_KEY);
-          setActive(null);
-          setNotes('');
-        },
-      },
-    ]);
+  async function discard() {
+    if (!(await confirmAction('Discard this session?', "This time won't be saved.", 'Discard', 'Keep Going'))) return;
+    localStorage.removeItem(ACTIVE_KEY);
+    setActive(null);
+    setNotes('');
   }
 
   async function finish() {
@@ -149,48 +143,57 @@ export default function Today() {
     <Screen>
       <Header kicker={dateLine} title={name ? `${greeting()}, ${name}` : greeting()} />
 
-      {active ? (
-        <>
-          <PracticeRing progress={elapsed / ringGoal} big={clock(elapsed)} caption={active.planned ? `of ${active.planned} min goal` : 'practicing'} />
-          <View style={{ marginTop: space.xl }}>
-            <Field label="What are you working on?" value={notes} onChangeText={setNotes} placeholder="Optional, saved with the session" multiline />
-            <ErrorText>{error}</ErrorText>
-            <Row gap={space.sm}>
-              <Button title="Discard" kind="secondary" onPress={discard} style={{ flex: 1 }} />
-              <Button title="Finish Session" onPress={finish} loading={saving} style={{ flex: 1.6 }} />
-            </Row>
-          </View>
-        </>
-      ) : (
-        <>
-          <PracticeRing
-            progress={goal ? todayMinutes / goal : todayMinutes > 0 ? 1 : 0}
-            big={String(todayMinutes)}
-            caption={goal ? `of ${goal} minutes today` : 'minutes today'}
-          />
-          <Button title={todayMinutes > 0 ? 'Practice Again' : 'Start Practicing'} onPress={start} style={{ marginTop: space.xl }} />
-          {!goal ? (
-            <Pressable onPress={() => router.push('/account')} style={{ alignSelf: 'center', paddingVertical: space.md }}>
-              <Small style={{ color: colors.textMuted }}>Set a daily goal in your profile</Small>
-            </Pressable>
-          ) : null}
-        </>
-      )}
+      <Columns flex={[1, 1.35]}>
+        <View style={wide ? { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space.xl } : undefined}>
+          {active ? (
+            <>
+              <PracticeRing progress={elapsed / ringGoal} big={clock(elapsed)} caption={active.planned ? `of ${active.planned} min goal` : 'practicing'} />
+              <View style={{ marginTop: space.xl }}>
+                <Field label="What are you working on?" value={notes} onChangeText={setNotes} placeholder="Optional, saved with the session" multiline />
+                <ErrorText>{error}</ErrorText>
+                <Row gap={space.sm}>
+                  <Button title="Discard" kind="secondary" onPress={discard} style={{ flex: 1 }} />
+                  <Button title="Finish Session" onPress={finish} loading={saving} style={{ flex: 1.6 }} />
+                </Row>
+              </View>
+            </>
+          ) : (
+            <>
+              <PracticeRing
+                progress={goal ? todayMinutes / goal : todayMinutes > 0 ? 1 : 0}
+                big={String(todayMinutes)}
+                caption={goal ? `of ${goal} minutes today` : 'minutes today'}
+              />
+              <Button title={todayMinutes > 0 ? 'Practice Again' : 'Start Practicing'} onPress={start} style={{ marginTop: space.xl }} />
+              {!goal ? (
+                <Pressable onPress={() => router.push('/account')} style={{ alignSelf: 'center', paddingVertical: space.md }}>
+                  <Small style={{ color: colors.textMuted }}>Set a daily goal in your profile</Small>
+                </Pressable>
+              ) : null}
+            </>
+          )}
+        </View>
 
-      <SectionTitle right={<Small>{weekTotal} min</Small>}>This Week</SectionTitle>
-      <Panel>
-        <WeekBars days={days} goal={goal} />
-      </Panel>
+        <View>
+          <SectionTitle flush={wide} right={<Small>{weekTotal} min</Small>}>
+            This Week
+          </SectionTitle>
+          <Panel>
+            <WeekBars days={days} goal={goal} />
+            {goal ? <Small style={{ marginTop: space.md }}>Green days hit your {goal} minute goal.</Small> : null}
+          </Panel>
 
-      <SectionTitle>Warm Up</SectionTitle>
-      <Row gap={space.md} style={{ alignItems: 'stretch' }}>
-        <QuickTool title="Tune Up" sub="Standard and alternate tunings" glyph={<TunerGlyph size={40} />} onPress={() => router.push('/tools/tuner')} />
-        <QuickTool title="Chords" sub="Blues, rock and open shapes" glyph={<ChordGlyph size={40} />} onPress={() => router.push('/tools/chords')} />
-      </Row>
+          <SectionTitle>Warm Up</SectionTitle>
+          <Row gap={space.md} style={{ alignItems: 'stretch' }}>
+            <QuickTool title="Tune Up" sub="Standard and alternate tunings" glyph={<TunerGlyph size={40} />} onPress={() => router.push('/tools/tuner')} />
+            <QuickTool title="Chords" sub="Blues, rock and open shapes" glyph={<ChordGlyph size={40} />} onPress={() => router.push('/tools/chords')} />
+          </Row>
 
-      <Body faint style={{ marginTop: space.xl, fontSize: 14 }}>
-        Your daily lesson plan will show up here once the lesson library is published.
-      </Body>
+          <Body faint style={{ marginTop: space.xl, fontSize: 14 }}>
+            Your daily lesson plan will show up here once the lesson library is published.
+          </Body>
+        </View>
+      </Columns>
     </Screen>
   );
 }
