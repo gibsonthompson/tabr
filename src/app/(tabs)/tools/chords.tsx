@@ -74,9 +74,9 @@ export default function Chords() {
                     justifyContent: 'center',
                     backgroundColor: fret === null ? 'transparent' : finger ? fingerColors[finger] : 'transparent',
                     borderWidth: fret === null || finger ? 0 : 2,
-                    borderColor: colors.olympic,
+                    borderColor: colors.cream,
                   }}>
-                  <Text style={{ fontWeight: '800', fontSize: 12, color: fret === null ? colors.candy : finger ? colors.ink : colors.olympic }}>
+                  <Text style={{ fontWeight: '800', fontSize: 12, color: fret === null ? colors.stop : finger ? colors.ink : colors.cream }}>
                     {fret === null ? '✕' : finger || 'o'}
                   </Text>
                 </View>
@@ -109,7 +109,7 @@ export default function Chords() {
               style={{
                 padding: space.md + 2,
                 borderRadius: radius.md,
-                backgroundColor: active ? colors.olympic : colors.surface,
+                backgroundColor: active ? colors.cream : colors.surface,
               }}>
               <Text style={{ fontFamily: fonts.heading, color: active ? colors.ink : colors.text, fontSize: 19 }} numberOfLines={1}>
                 {c.name}

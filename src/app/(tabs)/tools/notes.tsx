@@ -16,7 +16,7 @@ export default function NoteFinder() {
     const out: FretMark[] = [];
     for (let s = 0; s < 6; s++) {
       for (let f = 0; f <= MAX_FRET; f++) {
-        if (noteAt(s, f) === note) out.push({ string: s, fret: f, label: note, color: f === 0 || f === 12 ? colors.sunburst : colors.olympic });
+        if (noteAt(s, f) === note) out.push({ string: s, fret: f, label: note, color: f === 0 || f === 12 ? colors.honey : colors.cream });
       }
     }
     return out;
@@ -45,7 +45,7 @@ export default function NoteFinder() {
                 borderRadius: radius.md,
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: active ? colors.olympic : colors.surface,
+                backgroundColor: active ? colors.cream : colors.surface,
               }}>
               <Text style={{ fontFamily: fonts.heading, fontSize: 18, color: active ? colors.ink : colors.text }}>{n}</Text>
             </Pressable>

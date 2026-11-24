@@ -10,10 +10,10 @@ import { Body, Button, ErrorText, Field, Header, Loading, Panel, Pill, Row, Scre
 
 const ORDER: RepertoireStatus[] = ['learning', 'want_to_learn', 'can_play', 'performance_ready'];
 const STATUS_COLOR: Record<RepertoireStatus, string> = {
-  want_to_learn: colors.daphne,
-  learning: colors.sunburst,
-  can_play: colors.shell,
-  performance_ready: colors.surf,
+  want_to_learn: colors.honey,
+  learning: colors.chrome,
+  can_play: colors.cherry,
+  performance_ready: colors.green,
 };
 
 export default function Songs() {
@@ -158,7 +158,7 @@ export default function Songs() {
                           ))}
                         </Row>
                         <Pressable onPress={() => remove(item)} accessibilityRole="button" style={{ alignSelf: 'flex-start', marginTop: space.md, paddingVertical: 4 }}>
-                          <Text style={{ color: colors.candy, fontSize: 15, fontWeight: '600' }}>Remove song</Text>
+                          <Text style={{ color: colors.stop, fontSize: 15, fontWeight: '600' }}>Remove song</Text>
                         </Pressable>
                       </View>
                     ) : null}

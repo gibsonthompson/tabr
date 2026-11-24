@@ -13,7 +13,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Defs, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { colors, fonts, radius, space } from '@/lib/theme';
 import { select, tap } from '@/lib/haptics';
 
@@ -31,6 +31,7 @@ export function Screen({
   const content = [padded && styles.content];
   return (
     <SafeAreaView style={styles.screen} edges={edges ?? ['top']}>
+      <Burst />
       {scroll ? (
         <ScrollView contentContainerStyle={content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {children}
@@ -39,6 +40,24 @@ export function Screen({
         <View style={[content, { flex: 1 }]}>{children}</View>
       )}
     </SafeAreaView>
+  );
+}
+
+/** Soft sunburst glow at the top of each screen: honey center fading through cherry into the dark edge. */
+function Burst() {
+  return (
+    <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 560 }}>
+      <Svg width="100%" height="100%">
+        <Defs>
+          <RadialGradient id="tabr-burst" cx="50%" cy="-8%" rx="120%" ry="105%" fx="50%" fy="-8%">
+            <Stop offset="0" stopColor={colors.burstCenter} stopOpacity={0.42} />
+            <Stop offset="0.4" stopColor={colors.burstMid} stopOpacity={0.24} />
+            <Stop offset="1" stopColor={colors.bg} stopOpacity={0} />
+          </RadialGradient>
+        </Defs>
+        <Rect x="0" y="0" width="100%" height="100%" fill="url(#tabr-burst)" />
+      </Svg>
+    </View>
   );
 }
 
@@ -122,8 +141,8 @@ export function Button({
   style?: StyleProp<ViewStyle>;
   size?: 'lg' | 'sm';
 }) {
-  const bg = { primary: colors.olympic, secondary: colors.surfaceHigh, quiet: 'transparent', danger: 'transparent' }[kind];
-  const fg = { primary: colors.ink, secondary: colors.text, quiet: colors.textMuted, danger: colors.candy }[kind];
+  const bg = { primary: colors.cream, secondary: colors.surfaceHigh, quiet: 'transparent', danger: 'transparent' }[kind];
+  const fg = { primary: colors.ink, secondary: colors.text, quiet: colors.textMuted, danger: colors.stop }[kind];
   return (
     <Pressable
       onPress={() => {
@@ -160,7 +179,7 @@ export function Pill({ label, active, onPress, color }: { label: string; active?
       accessibilityState={{ selected: !!active }}
       style={({ pressed }) => [
         styles.pill,
-        active && { backgroundColor: color ?? colors.olympic },
+        active && { backgroundColor: color ?? colors.cream },
         pressed && !active && { backgroundColor: colors.surfaceHigh },
       ]}>
       <Text style={[styles.pillText, active && { color: colors.ink }]}>{label}</Text>
@@ -191,7 +210,7 @@ export function Segmented<T extends string | number>({
             }}
             accessibilityRole="radio"
             accessibilityState={{ checked: active }}
-            style={[styles.segment, active && { backgroundColor: colors.olympic }]}>
+            style={[styles.segment, active && { backgroundColor: colors.cream }]}>
             <Text style={[styles.segmentText, active && { color: colors.ink }]} numberOfLines={1}>
               {o.label}
             </Text>
@@ -304,6 +323,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: 'transparent',
   },
-  inputFocused: { borderColor: colors.daphne },
-  error: { color: colors.candy, fontSize: 15, marginBottom: space.md, lineHeight: 21 },
+  inputFocused: { borderColor: colors.honey },
+  error: { color: colors.stop, fontSize: 15, marginBottom: space.md, lineHeight: 21 },
 });

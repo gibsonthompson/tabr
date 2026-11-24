@@ -11,7 +11,7 @@ import { BackHeader, Body, Button, Pill, Row, Screen, Small } from '@/components
 
 const IN_TUNE = 5;
 const CLOSE = 15;
-const statusColor = (c: number) => (Math.abs(c) <= IN_TUNE ? colors.surf : Math.abs(c) <= CLOSE ? colors.sunburst : colors.shell);
+const statusColor = (c: number) => (Math.abs(c) <= IN_TUNE ? colors.green : Math.abs(c) <= CLOSE ? colors.honey : colors.cherry);
 
 /** A strobe-style strip: 21 ticks from -50 to +50 cents. */
 function CentsMeter({ cents }: { cents: number | null }) {
@@ -133,7 +133,7 @@ export default function Tuner() {
           </>
         ) : (
           <Text
-            style={{ fontFamily: fonts.display, fontSize: 40, letterSpacing: 2, color: listening ? colors.textMuted : colors.surfaceHigh, textAlign: 'center' }}
+            style={{ fontFamily: fonts.display, fontSize: 40, letterSpacing: 2, color: listening ? colors.textMuted : colors.textFaint, textAlign: 'center' }}
             accessibilityLabel={`${tuning.name}: ${tuning.notesLowToHigh}`}>
             {tuning.notesLowToHigh}
           </Text>
@@ -169,7 +169,7 @@ export default function Tuner() {
           style={{ marginTop: space.xl }}
         />
       )}
-      {error ? <Body style={{ color: colors.candy, textAlign: 'center', marginTop: space.md }}>{error}</Body> : null}
+      {error ? <Body style={{ color: colors.stop, textAlign: 'center', marginTop: space.md }}>{error}</Body> : null}
       <Small style={{ textAlign: 'center', marginTop: space.lg }}>Sound stays on your phone. Nothing is recorded.</Small>
     </Screen>
   );

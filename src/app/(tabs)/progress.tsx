@@ -19,7 +19,7 @@ function Avatar({ letter }: { letter: string }) {
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: colors.daphne,
+        backgroundColor: colors.honey,
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 6,
@@ -82,7 +82,7 @@ export default function Progress() {
       ) : (
         <>
           <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: space.md }}>
-            <Text style={{ fontFamily: fonts.display, color: stats.streak ? colors.sunburst : colors.surfaceHigh, fontSize: 104, lineHeight: 104, letterSpacing: -5 }}>
+            <Text style={{ fontFamily: fonts.display, color: stats.streak ? colors.honey : colors.surfaceHigh, fontSize: 104, lineHeight: 104, letterSpacing: -5 }}>
               {stats.streak}
             </Text>
             <Text style={{ fontFamily: fonts.heading, color: colors.text, fontSize: 22, lineHeight: 26, marginBottom: 14, flex: 1 }}>
@@ -111,7 +111,7 @@ export default function Progress() {
                       <Text style={{ fontFamily: fonts.heading, color: colors.text, fontSize: 17 }}>
                         {new Date(s.started_at).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
                       </Text>
-                      <Text style={{ fontFamily: fonts.monoBold, color: colors.daphne, fontSize: 15 }}>{s.actual_minutes ?? 0} min</Text>
+                      <Text style={{ fontFamily: fonts.monoBold, color: colors.honey, fontSize: 15 }}>{s.actual_minutes ?? 0} min</Text>
                     </View>
                     {s.notes ? <Small style={{ color: colors.textMuted, marginTop: 4 }}>{s.notes}</Small> : null}
                   </View>

@@ -1,34 +1,38 @@
 /**
- * tabr design tokens.
- * Base: Sherwood Green (a vintage guitar finish), not black.
- * The four finger colors are classic custom-shop finishes and double as the brand palette.
+ * tabr design tokens, drawn from a cherry sunburst Les Paul.
+ * Base: the dark cherry edge of the burst. Accents: the honey center, cherry red,
+ * cream binding and nickel hardware. The four finger colors come from the same guitar.
  */
 export const colors = {
-  bg: '#16231E', // Sherwood, deep
-  surface: '#1F3029', // raised panel
-  surfaceHigh: '#2A3F36', // pressed / selected / input
-  line: 'rgba(238,234,224,0.09)',
-  text: '#EEEAE0', // Olympic White
-  textMuted: '#A9B8B0',
-  textFaint: '#71857B',
-  ink: '#10201A', // text on light fills
+  bg: '#1E0D0C', // cherry burst edge, near black
+  surface: '#2D1513', // raised panel
+  surfaceHigh: '#40201C', // pressed / selected / input
+  line: 'rgba(244,228,198,0.09)',
+  text: '#F4E4C6', // cream binding
+  textMuted: '#CDAF90',
+  textFaint: '#94715C',
+  ink: '#1E0D0C', // text on light fills
 
-  daphne: '#86BDE3', // Daphne Blue, index finger
-  shell: '#F2AFA6', // Shell Pink, middle finger
-  sunburst: '#F1B84B', // Sunburst Amber, ring finger
-  olympic: '#EEEAE0', // Olympic White, pinky finger
+  honey: '#F3AE47', // honey center of the burst, index finger
+  cherry: '#E85D5F', // cherry red, middle finger
+  chrome: '#B7CAD6', // nickel pickup covers, ring finger
+  cream: '#F4E4C6', // cream binding, pinky finger, primary buttons
 
-  surf: '#7EE0B5', // Surf Green, in tune / success
-  candy: '#F0646B', // Candy Apple Red, don't play / errors
+  green: '#A2D98C', // in tune / goal hit
+  stop: '#FF7B54', // don't play / errors
 
   // fretboard materials
-  ebony: '#14110F',
-  ebonyEdge: '#26201C',
-  nickel: '#B9BCB6',
-  bone: '#E9E2D0',
-  pearl: '#D9D4C7',
-  plainString: '#D7D9D4',
-  woundString: '#B7AE9A',
+  rosewood: '#1F120D',
+  rosewoodEdge: '#E7D3AE', // bound neck edge
+  nickel: '#C3C2BB',
+  bone: '#EFE2C8',
+  pearl: '#E9DDC4',
+  plainString: '#DCDAD3',
+  woundString: '#C0AE92',
+
+  // sunburst glow behind every screen
+  burstCenter: '#F09A3A',
+  burstMid: '#B8322C',
 };
 
 export const fonts = {
@@ -45,10 +49,10 @@ export const radius = { sm: 10, md: 14, lg: 22, pill: 999 };
 /** Finger colors: 0 open, 1 index, 2 middle, 3 ring, 4 pinky. */
 export const fingerColors: Record<number, string> = {
   0: 'transparent',
-  1: colors.daphne,
-  2: colors.shell,
-  3: colors.sunburst,
-  4: colors.olympic,
+  1: colors.honey,
+  2: colors.cherry,
+  3: colors.chrome,
+  4: colors.cream,
 };
 
 export const fingerNames: Record<number, string> = {

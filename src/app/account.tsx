@@ -113,7 +113,7 @@ export default function Account() {
       <Field label="What do you want to be able to play?" value={ambitions} onChangeText={setAmbitions} placeholder="Solo over a 12-bar blues" multiline />
 
       <ErrorText>{error}</ErrorText>
-      {saved ? <Body style={{ color: colors.surf, marginBottom: space.md }}>Profile saved.</Body> : null}
+      {saved ? <Body style={{ color: colors.green, marginBottom: space.md }}>Profile saved.</Body> : null}
       <Button title="Save Profile" onPress={save} loading={saving} />
 
       <SectionTitle>Account</SectionTitle>

@@ -7,7 +7,7 @@ export default function PracticeRing({
   progress,
   big,
   caption,
-  color = colors.daphne,
+  color = colors.honey,
   size = 248,
 }: {
   progress: number; // 0..1+
@@ -29,7 +29,7 @@ export default function PracticeRing({
             cx={size / 2}
             cy={size / 2}
             r={r}
-            stroke={progress >= 1 ? colors.surf : color}
+            stroke={progress >= 1 ? colors.green : color}
             strokeWidth={stroke}
             fill="none"
             strokeLinecap="round"

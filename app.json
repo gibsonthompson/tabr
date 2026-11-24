@@ -7,7 +7,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "backgroundColor": "#16231E",
+    "backgroundColor": "#1E0D0C",
     "ios": {
       "bundleIdentifier": "com.rocketsolutions.tabr",
       "supportsTablet": false,
@@ -18,7 +18,7 @@
     "android": {
       "package": "com.rocketsolutions.tabr",
       "adaptiveIcon": {
-        "backgroundColor": "#16231E",
+        "backgroundColor": "#1E0D0C",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -33,7 +33,7 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 160,
           "resizeMode": "contain",
-          "backgroundColor": "#16231E"
+          "backgroundColor": "#1E0D0C"
         }
       ],
       "expo-sqlite",

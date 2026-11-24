@@ -25,7 +25,7 @@ export default function Headstock({
   const right = [0, 1, 2];
   const rowY = [48, 108, 168];
 
-  const color = (s: PegState) => (s === 'good' ? colors.surf : s === 'target' || s === 'locked' ? colors.olympic : colors.surfaceHigh);
+  const color = (s: PegState) => (s === 'good' ? colors.green : s === 'target' || s === 'locked' ? colors.cream : colors.surfaceHigh);
   const textColor = (s: PegState) => (s === 'idle' ? colors.text : colors.ink);
 
   const Peg = ({ idx, side, row }: { idx: number; side: 'l' | 'r'; row: number }) => {
@@ -52,7 +52,7 @@ export default function Headstock({
           alignItems: 'center',
           justifyContent: 'center',
           borderWidth: st === 'locked' ? 2 : 0,
-          borderColor: colors.daphne,
+          borderColor: colors.honey,
         }}>
         <Text style={{ fontFamily: fonts.display, fontSize: 22, color: textColor(st), lineHeight: 24 }}>{s.name}</Text>
         <Text style={{ fontSize: 10, fontWeight: '700', color: st === 'idle' ? colors.textFaint : colors.ink, opacity: 0.8 }}>{idx + 1}</Text>
@@ -70,13 +70,13 @@ export default function Headstock({
   return (
     <View style={{ width: W, height: H, alignSelf: 'center' }}>
       <Svg width={W} height={H}>
-        <Path d={outline} fill={colors.ebony} stroke={colors.ebonyEdge} strokeWidth={2} />
+        <Path d={outline} fill={colors.rosewood} stroke={colors.rosewoodEdge} strokeWidth={2} />
         {/* strings from nut to posts */}
         {left.map((idx, row) => (
-          <Line key={`sl${idx}`} x1={stringX(idx)} y1={nutY} x2={postX('l')} y2={rowY[row]} stroke={states[idx] === 'idle' ? colors.woundString : colors.olympic} strokeWidth={1 + (idx - 2) * 0.35} opacity={0.85} />
+          <Line key={`sl${idx}`} x1={stringX(idx)} y1={nutY} x2={postX('l')} y2={rowY[row]} stroke={states[idx] === 'idle' ? colors.woundString : colors.cream} strokeWidth={1 + (idx - 2) * 0.35} opacity={0.85} />
         ))}
         {right.map((idx, row) => (
-          <Line key={`sr${idx}`} x1={stringX(idx)} y1={nutY} x2={postX('r')} y2={rowY[row]} stroke={states[idx] === 'idle' ? colors.plainString : colors.olympic} strokeWidth={0.9 + idx * 0.35} opacity={0.85} />
+          <Line key={`sr${idx}`} x1={stringX(idx)} y1={nutY} x2={postX('r')} y2={rowY[row]} stroke={states[idx] === 'idle' ? colors.plainString : colors.cream} strokeWidth={0.9 + idx * 0.35} opacity={0.85} />
         ))}
         {/* tuner posts */}
         {[0, 1, 2].map((row) => (

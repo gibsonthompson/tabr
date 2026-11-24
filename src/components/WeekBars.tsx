@@ -27,7 +27,7 @@ export default function WeekBars({ days, goal }: { days: Day[]; goal: number | n
                   width: '100%',
                   height: h,
                   borderRadius: radius.sm - 4,
-                  backgroundColor: d.minutes === 0 ? colors.surfaceHigh : met ? colors.surf : colors.daphne,
+                  backgroundColor: d.minutes === 0 ? colors.surfaceHigh : met ? colors.green : colors.honey,
                   opacity: d.isFuture ? 0.35 : 1,
                 }}
               />

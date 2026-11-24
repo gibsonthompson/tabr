@@ -92,7 +92,7 @@ export default function SignIn() {
         />
 
         <ErrorText>{error}</ErrorText>
-        {notice ? <Body style={{ color: colors.surf, marginBottom: space.md }}>{notice}</Body> : null}
+        {notice ? <Body style={{ color: colors.green, marginBottom: space.md }}>{notice}</Body> : null}
 
         <Button title={mode === 'sign-in' ? 'Sign In' : 'Create Account'} onPress={submit} loading={busy} disabled={!valid} />
 

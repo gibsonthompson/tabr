@@ -37,7 +37,7 @@ export function Wordmark({ size = 34 }: { size?: number }) {
 
 /* ---------- Small glyphs for tool tiles and controls ---------- */
 
-export function TunerGlyph({ size = 44, color = colors.daphne }: { size?: number; color?: string }) {
+export function TunerGlyph({ size = 44, color = colors.honey }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 44 44">
       <Path d="M6 30 A16 16 0 0 1 38 30" stroke={colors.textFaint} strokeWidth={3} fill="none" strokeLinecap="round" />
@@ -70,9 +70,9 @@ export function TabGlyph({ size = 44 }: { size?: number }) {
       {[10, 17, 24, 31].map((y) => (
         <Line key={y} x1={5} y1={y} x2={39} y2={y} stroke={colors.textFaint} strokeWidth={2} />
       ))}
-      <Rect x={11} y={13} width={8} height={8} rx={2} fill={colors.sunburst} />
-      <Rect x={24} y={20} width={8} height={8} rx={2} fill={colors.shell} />
-      <Line x1={5} y1={38} x2={21} y2={38} stroke={colors.daphne} strokeWidth={3} strokeLinecap="round" />
+      <Rect x={11} y={13} width={8} height={8} rx={2} fill={colors.chrome} />
+      <Rect x={24} y={20} width={8} height={8} rx={2} fill={colors.cherry} />
+      <Line x1={5} y1={38} x2={21} y2={38} stroke={colors.honey} strokeWidth={3} strokeLinecap="round" />
     </Svg>
   );
 }
@@ -83,9 +83,9 @@ export function NotesGlyph({ size = 44 }: { size?: number }) {
       {[9, 18, 27, 36].map((y) => (
         <Line key={y} x1={4} y1={y} x2={40} y2={y} stroke={colors.textFaint} strokeWidth={2} />
       ))}
-      <Circle cx={10} cy={36} r={4} fill={colors.olympic} />
-      <Circle cx={24} cy={18} r={4} fill={colors.olympic} />
-      <Circle cx={34} cy={9} r={4} fill={colors.olympic} />
+      <Circle cx={10} cy={36} r={4} fill={colors.cream} />
+      <Circle cx={24} cy={18} r={4} fill={colors.cream} />
+      <Circle cx={34} cy={9} r={4} fill={colors.cream} />
     </Svg>
   );
 }

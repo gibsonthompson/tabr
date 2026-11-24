@@ -21,7 +21,7 @@ type Props = {
 const LABEL_W = 26;
 const OPEN_W = 24;
 const PAD_TOP = 22;
-const PAD_BOTTOM = 30;
+const PAD_BOTTOM = 46;
 const SINGLE_INLAYS = [3, 5, 7, 9, 15, 17, 19];
 
 /**
@@ -72,21 +72,26 @@ export default function Fretboard({ notes = [], mutedStrings = [], marks = [], m
         <Svg width={width} height={height}>
           <Defs>
             <LinearGradient id="board" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor="#2A211C" />
-              <Stop offset="1" stopColor="#1B1512" />
+              <Stop offset="0" stopColor="#3A2117" />
+              <Stop offset="1" stopColor="#22130E" />
             </LinearGradient>
           </Defs>
 
           {/* Neck side, then playing surface */}
-          <Polygon points={side} fill={colors.ebonyEdge} />
+          <Polygon points={side} fill="#3B1D14" />
           <Polygon points={board} fill="url(#board)" />
 
-          {/* Pearl dots */}
-          {SINGLE_INLAYS.filter((f) => f <= frets).map((f) => (
-            <Circle key={`in${f}`} cx={project(fretMid(f), 0.5)} cy={rowY(0.5)} r={4.5 * scale(0.5)} fill={colors.pearl} opacity={0.55} />
-          ))}
-          {frets >= 12 &&
-            [0.3, 0.7].map((d) => <Circle key={`in12${d}`} cx={project(fretMid(12), d)} cy={rowY(d)} r={4.5 * scale(d)} fill={colors.pearl} opacity={0.55} />)}
+          {/* Cream binding along both edges */}
+          <Line x1={project(nutX, eTop)} y1={rowY(eTop)} x2={project(endX, eTop)} y2={rowY(eTop)} stroke={colors.rosewoodEdge} strokeWidth={2} opacity={0.9} />
+          <Line x1={project(nutX, eBot)} y1={rowY(eBot)} x2={project(endX, eBot)} y2={rowY(eBot)} stroke={colors.rosewoodEdge} strokeWidth={2.5} />
+
+          {/* Trapezoid pearl inlays */}
+          {[...SINGLE_INLAYS, 12].filter((f, i, a) => f <= frets && a.indexOf(f) === i).map((f) => {
+            const w = (flatX(f) - flatX(f - 1)) * 0.17;
+            const m = fretMid(f);
+            const pts = [pt(m - w * 0.75, 0.3), pt(m + w * 0.75, 0.3), pt(m + w, 0.7), pt(m - w, 0.7)].join(' ');
+            return <Polygon key={`in${f}`} points={pts} fill={colors.pearl} opacity={0.42} />;
+          })}
 
           {/* Nickel frets */}
           {Array.from({ length: frets }, (_, i) => i + 1).map((f) => (
@@ -130,7 +135,7 @@ export default function Fretboard({ notes = [], mutedStrings = [], marks = [], m
 
           {/* Fret numbers */}
           {[1, 3, 5, 7, 9, 12, 15, 17, 19].filter((f) => f <= frets).map((f) => (
-            <SvgText key={`fn${f}`} x={project(fretMid(f), 1)} y={height - 6} fill={colors.textFaint} fontSize={11} fontFamily={fonts.mono} textAnchor="middle">
+            <SvgText key={`fn${f}`} x={project(fretMid(f), 1)} y={rowY(eBot) + sideDepth + 15} fill={colors.textMuted} fontSize={11} fontFamily={fonts.mono} textAnchor="middle">
               {f}
             </SvgText>
           ))}
@@ -141,8 +146,8 @@ export default function Fretboard({ notes = [], mutedStrings = [], marks = [], m
             const r = 4.5;
             return (
               <G key={`mx${i}`}>
-                <Line x1={openX - r} y1={y - r} x2={openX + r} y2={y + r} stroke={colors.candy} strokeWidth={2.4} strokeLinecap="round" />
-                <Line x1={openX - r} y1={y + r} x2={openX + r} y2={y - r} stroke={colors.candy} strokeWidth={2.4} strokeLinecap="round" />
+                <Line x1={openX - r} y1={y - r} x2={openX + r} y2={y + r} stroke={colors.stop} strokeWidth={2.4} strokeLinecap="round" />
+                <Line x1={openX - r} y1={y + r} x2={openX + r} y2={y - r} stroke={colors.stop} strokeWidth={2.4} strokeLinecap="round" />
               </G>
             );
           })}
@@ -155,8 +160,8 @@ export default function Fretboard({ notes = [], mutedStrings = [], marks = [], m
             const r = 10.5 * scale(d);
             return (
               <G key={`mk${i}`}>
-                <Circle cx={x} cy={y} r={r + 2} fill={colors.ebony} />
-                <Circle cx={x} cy={y} r={r} fill={m.color ?? colors.olympic} />
+                <Circle cx={x} cy={y} r={r + 2} fill={colors.rosewood} />
+                <Circle cx={x} cy={y} r={r} fill={m.color ?? colors.cream} />
                 <SvgText x={x} y={y + 4} fill={colors.ink} fontSize={10.5} fontFamily={fonts.display} textAnchor="middle">
                   {m.label}
                 </SvgText>
@@ -182,7 +187,7 @@ export default function Fretboard({ notes = [], mutedStrings = [], marks = [], m
             if (n.fret === 0) {
               return (
                 <G key={`n${i}`}>
-                  <Circle cx={openX} cy={y} r={r * 0.68} fill={colors.bg} stroke={colors.olympic} strokeWidth={2.2} />
+                  <Circle cx={openX} cy={y} r={r * 0.68} fill={colors.bg} stroke={colors.cream} strokeWidth={2.2} />
                 </G>
               );
             }
@@ -193,8 +198,8 @@ export default function Fretboard({ notes = [], mutedStrings = [], marks = [], m
               const p = `${x},${y - r} ${x + r},${y} ${x},${y + r} ${x - r},${y}`;
               return (
                 <G key={`n${i}`}>
-                  <Polygon points={p} fill={colors.ebony} stroke={colors.olympic} strokeWidth={2} />
-                  <SvgText x={x} y={y + 4} fill={colors.olympic} fontSize={10.5} fontFamily={fonts.display} textAnchor="middle">
+                  <Polygon points={p} fill={colors.rosewood} stroke={colors.cream} strokeWidth={2} />
+                  <SvgText x={x} y={y + 4} fill={colors.cream} fontSize={10.5} fontFamily={fonts.display} textAnchor="middle">
                     {n.fret}
                   </SvgText>
                 </G>
@@ -205,8 +210,8 @@ export default function Fretboard({ notes = [], mutedStrings = [], marks = [], m
             const tech = n.technique && n.technique !== 'bend' ? TECHNIQUE_INFO[n.technique].short : null;
             return (
               <G key={`n${i}`} opacity={ghost ? 0.55 : 1}>
-                <Circle cx={x} cy={y} r={r + 2.2} fill={colors.ebony} />
-                <Circle cx={x} cy={y} r={r} fill={ghost ? colors.ebony : color} stroke={color} strokeWidth={ghost ? 2 : 0} strokeDasharray={ghost ? '3,2.5' : undefined} />
+                <Circle cx={x} cy={y} r={r + 2.2} fill={colors.rosewood} />
+                <Circle cx={x} cy={y} r={r} fill={ghost ? colors.rosewood : color} stroke={color} strokeWidth={ghost ? 2 : 0} strokeDasharray={ghost ? '3,2.5' : undefined} />
                 <SvgText x={x} y={y + 4.5} fill={ghost ? color : colors.ink} fontSize={13} fontFamily={fonts.display} textAnchor="middle">
                   {n.finger && n.finger > 0 ? n.finger : n.fret}
                 </SvgText>

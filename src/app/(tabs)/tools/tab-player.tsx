@@ -29,7 +29,7 @@ function RoundButton({ kind, onPress, big, label }: { kind: 'play' | 'pause' | '
         width: size,
         height: size,
         borderRadius: size / 2,
-        backgroundColor: big ? colors.olympic : colors.surface,
+        backgroundColor: big ? colors.cream : colors.surface,
         alignItems: 'center',
         justifyContent: 'center',
         transform: [{ scale: pressed ? 0.94 : 1 }],
@@ -91,7 +91,7 @@ export default function TabPlayer() {
             style={{ height: 28, justifyContent: 'center', marginTop: space.md }}>
             <View style={{ height: 6, backgroundColor: colors.surface, borderRadius: 3, flexDirection: 'row', gap: 2, overflow: 'hidden' }}>
               {steps.map((_, i) => (
-                <View key={i} style={{ flex: 1, backgroundColor: i <= index ? colors.daphne : colors.surfaceHigh }} />
+                <View key={i} style={{ flex: 1, backgroundColor: i <= index ? colors.honey : colors.surfaceHigh }} />
               ))}
             </View>
           </Pressable>
@@ -126,7 +126,7 @@ export default function TabPlayer() {
                 .sort((a, b) => b.string - a.string)
                 .map((n, i) => (
                   <Row key={i} gap={space.md}>
-                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: n.finger ? fingerColors[n.finger] : colors.olympic }} />
+                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: n.finger ? fingerColors[n.finger] : colors.cream }} />
                     <Text style={{ fontFamily: fonts.heading, color: colors.text, fontSize: 16, width: 64 }}>
                       {STANDARD_STRINGS[n.string].num} {STANDARD_STRINGS[n.string].name}
                     </Text>

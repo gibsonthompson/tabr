@@ -8,10 +8,10 @@ import { Body, ErrorText, Header, Loading, Panel, Screen, SectionTitle, Small } 
 
 const LADDER: { level: MasteryLevel; color: string; what: string }[] = [
   { level: 'exposure', color: colors.surfaceHigh, what: "You've had it explained and heard it." },
-  { level: 'recognition', color: colors.daphne, what: 'You can spot it in a song or a tab.' },
-  { level: 'demonstration', color: colors.shell, what: 'You can play it cleanly on its own.' },
-  { level: 'application', color: colors.sunburst, what: 'You use it inside real music, in time.' },
-  { level: 'mastery', color: colors.surf, what: 'It happens without thinking, at full speed.' },
+  { level: 'recognition', color: colors.honey, what: 'You can spot it in a song or a tab.' },
+  { level: 'demonstration', color: colors.cherry, what: 'You can play it cleanly on its own.' },
+  { level: 'application', color: colors.chrome, what: 'You use it inside real music, in time.' },
+  { level: 'mastery', color: colors.green, what: 'It happens without thinking, at full speed.' },
 ];
 
 const LEVEL_INDEX: Record<MasteryLevel, number> = {
