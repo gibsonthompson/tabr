@@ -3,7 +3,7 @@ import { colors } from '@/lib/theme';
 
 export default function TabsLayout() {
   return (
-    <NativeTabs tintColor={colors.gold} labelStyle={{ color: colors.textMuted }}>
+    <NativeTabs tintColor={colors.olympic} labelStyle={{ color: colors.textFaint }}>
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>Today</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="sun.max.fill" md="today" />

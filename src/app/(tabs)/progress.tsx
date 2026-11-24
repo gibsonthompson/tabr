@@ -1,119 +1,127 @@
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth';
 import type { PracticeSession } from '@/lib/db';
-import { colors, space } from '@/lib/theme';
-import { Body, Button, Card, Empty, ErrorText, Grid2, Label, Screen, Title } from '@/components/ui';
+import { startOfWeek, streakDays, weekMinutes } from '@/lib/practice';
+import { colors, fonts, radius, space } from '@/lib/theme';
+import WeekBars from '@/components/WeekBars';
+import { Body, ErrorText, Header, Loading, Panel, Screen, SectionTitle, Small } from '@/components/ui';
 
-function dayKey(d: Date) {
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-}
-
-function startOfWeek(d: Date) {
-  const s = new Date(d);
-  const diff = (s.getDay() + 6) % 7; // Monday start
-  s.setHours(0, 0, 0, 0);
-  s.setDate(s.getDate() - diff);
-  return s;
-}
-
-function streakDays(sessions: PracticeSession[]) {
-  const days = new Set(sessions.map((s) => dayKey(new Date(s.started_at))));
-  const cursor = new Date();
-  if (!days.has(dayKey(cursor))) cursor.setDate(cursor.getDate() - 1); // today not practiced yet doesn't break it
-  let streak = 0;
-  while (days.has(dayKey(cursor))) {
-    streak++;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  return streak;
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
+function Avatar({ letter }: { letter: string }) {
   return (
-    <Card style={{ marginBottom: 0 }}>
-      <Label>{label}</Label>
-      <Text style={{ color: colors.gold, fontSize: 28, fontWeight: '800', fontVariant: ['tabular-nums'] }}>{value}</Text>
-    </Card>
+    <Pressable
+      onPress={() => router.push('/account')}
+      accessibilityRole="button"
+      accessibilityLabel="Profile and settings"
+      style={({ pressed }) => ({
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: colors.daphne,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 6,
+        opacity: pressed ? 0.8 : 1,
+      })}>
+      <Text style={{ fontFamily: fonts.display, color: colors.ink, fontSize: 19 }}>{letter}</Text>
+    </Pressable>
   );
 }
 
 export default function Progress() {
+  const { session } = useAuth();
   const [sessions, setSessions] = useState<PracticeSession[] | null>(null);
+  const [goal, setGoal] = useState<number | null>(null);
+  const [name, setName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
-      supabase
-        .from('tabr_practice_sessions')
-        .select('id, started_at, ended_at, planned_minutes, actual_minutes, notes')
-        .order('started_at', { ascending: false })
-        .limit(500)
-        .then(({ data, error }) => {
-          if (error) setError(error.message);
-          setSessions((data as PracticeSession[]) ?? []);
-        });
+      Promise.all([
+        supabase
+          .from('tabr_practice_sessions')
+          .select('id, started_at, ended_at, planned_minutes, actual_minutes, notes')
+          .order('started_at', { ascending: false })
+          .limit(1000),
+        supabase.from('tabr_profiles').select('display_name, practice_minutes_per_session').maybeSingle(),
+      ]).then(([s, p]) => {
+        if (s.error) setError(`Your practice history didn't load: ${s.error.message}`);
+        setSessions((s.data as PracticeSession[]) ?? []);
+        setGoal(p.data?.practice_minutes_per_session ?? null);
+        setName(p.data?.display_name ?? null);
+      });
     }, []),
   );
 
   const stats = useMemo(() => {
     const list = sessions ?? [];
-    const weekStart = startOfWeek(new Date()).getTime();
+    const weekStart = startOfWeek().getTime();
     const thisWeek = list.filter((s) => new Date(s.started_at).getTime() >= weekStart);
-    const minutes = (arr: PracticeSession[]) => arr.reduce((sum, s) => sum + (s.actual_minutes ?? 0), 0);
+    const sum = (arr: PracticeSession[]) => arr.reduce((t, s) => t + (s.actual_minutes ?? 0), 0);
     return {
-      weekMinutes: minutes(thisWeek),
+      days: weekMinutes(list),
+      weekMinutes: sum(thisWeek),
       weekSessions: thisWeek.length,
-      totalHours: minutes(list) / 60,
+      totalHours: sum(list) / 60,
+      total: list.length,
       streak: streakDays(list),
     };
   }, [sessions]);
 
+  const letter = (name ?? session?.user.email ?? '?').trim().charAt(0).toUpperCase();
+
   return (
     <Screen>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <View style={{ flex: 1 }}>
-          <Title sub="Your practice so far.">Progress</Title>
-        </View>
-        <Button title="Account" kind="secondary" onPress={() => router.push('/account')} style={{ paddingVertical: 8, minHeight: 36 }} />
-      </View>
+      <Header title="Progress" right={<Avatar letter={letter} />} />
       <ErrorText>{error}</ErrorText>
 
       {sessions === null ? (
-        <ActivityIndicator color={colors.gold} style={{ marginTop: space.xl }} />
+        <Loading />
       ) : (
         <>
-          <Grid2>
-            <Stat label="Minutes This Week" value={String(stats.weekMinutes)} />
-            <Stat label="Sessions This Week" value={String(stats.weekSessions)} />
-            <Stat label="Hours All Time" value={stats.totalHours.toFixed(1)} />
-            <Stat label="Day Streak" value={String(stats.streak)} />
-          </Grid2>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: space.md }}>
+            <Text style={{ fontFamily: fonts.display, color: stats.streak ? colors.sunburst : colors.surfaceHigh, fontSize: 104, lineHeight: 104, letterSpacing: -5 }}>
+              {stats.streak}
+            </Text>
+            <Text style={{ fontFamily: fonts.heading, color: colors.text, fontSize: 22, lineHeight: 26, marginBottom: 14, flex: 1 }}>
+              {stats.streak === 1 ? 'day in a row' : 'days in a row'}
+            </Text>
+          </View>
+          <Body muted style={{ marginTop: space.sm }}>
+            {stats.total === 0
+              ? 'Finish a practice session on the Today tab and it starts counting here.'
+              : `${stats.totalHours.toFixed(1)} hours over ${stats.total} ${stats.total === 1 ? 'session' : 'sessions'} so far.`}
+          </Body>
 
-          <View style={{ height: space.lg }} />
-          <Label>Recent Sessions</Label>
-          {sessions.length === 0 ? (
-            <Empty title="No sessions yet" body="Start a practice timer on the Today tab. Each finished session is logged here." />
-          ) : (
-            sessions.slice(0, 20).map((s) => (
-              <Card key={s.id}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15 }}>
-                    {new Date(s.started_at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
-                  </Text>
-                  <Text style={{ color: colors.gold, fontWeight: '700', fontSize: 15 }}>{s.actual_minutes ?? 0} min</Text>
-                </View>
-                {s.notes ? <Body muted style={{ marginTop: space.xs }}>{s.notes}</Body> : null}
-              </Card>
-            ))
-          )}
+          <SectionTitle right={<Small>{stats.weekSessions} {stats.weekSessions === 1 ? 'session' : 'sessions'}</Small>}>This Week</SectionTitle>
+          <Panel>
+            <WeekBars days={stats.days} goal={goal} />
+            {goal ? <Small style={{ marginTop: space.md }}>Green days hit your {goal} minute goal.</Small> : null}
+          </Panel>
 
-          <View style={{ height: space.md }} />
-          <Card>
-            <Label>Skill Mastery</Label>
-            <Body muted>Mastery tracking turns on with the lesson library. It moves only when you show a skill, not when you finish a lesson.</Body>
-          </Card>
+          {sessions.length ? (
+            <>
+              <SectionTitle>Recent Sessions</SectionTitle>
+              <View style={{ backgroundColor: colors.surface, borderRadius: radius.lg, overflow: 'hidden' }}>
+                {sessions.slice(0, 15).map((s, i) => (
+                  <View key={s.id} style={{ padding: space.lg, borderTopWidth: i ? 1 : 0, borderTopColor: colors.line }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                      <Text style={{ fontFamily: fonts.heading, color: colors.text, fontSize: 17 }}>
+                        {new Date(s.started_at).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+                      </Text>
+                      <Text style={{ fontFamily: fonts.monoBold, color: colors.daphne, fontSize: 15 }}>{s.actual_minutes ?? 0} min</Text>
+                    </View>
+                    {s.notes ? <Small style={{ color: colors.textMuted, marginTop: 4 }}>{s.notes}</Small> : null}
+                  </View>
+                ))}
+              </View>
+            </>
+          ) : null}
+
+          <SectionTitle>Skills</SectionTitle>
+          <Body muted>Skill progress shows up here once lessons are published. A skill only moves up when you show it, not when you finish a lesson.</Body>
         </>
       )}
     </Screen>

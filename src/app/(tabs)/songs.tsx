@@ -1,19 +1,27 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { REPERTOIRE_LABELS, type RepertoireItem, type RepertoireStatus } from '@/lib/db';
-import { colors, space } from '@/lib/theme';
-import { Button, Card, Chip, Empty, ErrorText, Field, Label, Screen, Title } from '@/components/ui';
+import { select } from '@/lib/haptics';
+import { colors, fonts, radius, space } from '@/lib/theme';
+import { Body, Button, ErrorText, Field, Header, Loading, Panel, Pill, Row, Screen, SectionTitle, Small } from '@/components/ui';
 
-const STATUSES = Object.keys(REPERTOIRE_LABELS) as RepertoireStatus[];
+const ORDER: RepertoireStatus[] = ['learning', 'want_to_learn', 'can_play', 'performance_ready'];
+const STATUS_COLOR: Record<RepertoireStatus, string> = {
+  want_to_learn: colors.daphne,
+  learning: colors.sunburst,
+  can_play: colors.shell,
+  performance_ready: colors.surf,
+};
 
 export default function Songs() {
   const { session } = useAuth();
   const [items, setItems] = useState<RepertoireItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [open, setOpen] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
   const [status, setStatus] = useState<RepertoireStatus>('learning');
@@ -24,7 +32,7 @@ export default function Songs() {
       .from('tabr_repertoire')
       .select('id, title, artist, status, notes, updated_at')
       .order('updated_at', { ascending: false });
-    if (error) setError(error.message);
+    if (error) setError(`Your songs didn't load: ${error.message}`);
     setItems((data as RepertoireItem[]) ?? []);
   }, []);
 
@@ -38,14 +46,9 @@ export default function Songs() {
     if (!session || !title.trim()) return;
     setSaving(true);
     setError(null);
-    const { error } = await supabase.from('tabr_repertoire').insert({
-      user_id: session.user.id,
-      title: title.trim(),
-      artist: artist.trim() || null,
-      status,
-    });
+    const { error } = await supabase.from('tabr_repertoire').insert({ user_id: session.user.id, title: title.trim(), artist: artist.trim() || null, status });
     setSaving(false);
-    if (error) return setError(error.message);
+    if (error) return setError(`That song didn't save: ${error.message}`);
     setTitle('');
     setArtist('');
     setStatus('learning');
@@ -57,68 +60,113 @@ export default function Songs() {
     setItems((prev) => prev?.map((i) => (i.id === item.id ? { ...i, status: next } : i)) ?? null);
     const { error } = await supabase.from('tabr_repertoire').update({ status: next }).eq('id', item.id);
     if (error) {
-      setError(error.message);
+      setError(`Status didn't save: ${error.message}`);
       load();
     }
   }
 
   function remove(item: RepertoireItem) {
-    Alert.alert('Remove this song?', item.title, [
+    Alert.alert(`Remove ${item.title}?`, 'It will be taken off your song list.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Remove',
         style: 'destructive',
         onPress: async () => {
+          setOpen(null);
           const { error } = await supabase.from('tabr_repertoire').delete().eq('id', item.id);
-          if (error) setError(error.message);
+          if (error) setError(`It wasn't removed: ${error.message}`);
           load();
         },
       },
     ]);
   }
 
+  const groups = ORDER.map((s) => ({ status: s, list: (items ?? []).filter((i) => i.status === s) })).filter((g) => g.list.length);
+
   return (
     <Screen>
-      <Title sub="Songs you know, are learning, or want to learn.">Songs</Title>
+      <Header
+        title="Songs"
+        right={!adding ? <Button title="Add Song" size="sm" onPress={() => setAdding(true)} style={{ marginBottom: 6 }} /> : undefined}
+      />
       <ErrorText>{error}</ErrorText>
 
       {adding ? (
-        <Card>
-          <Field label="Song" value={title} onChangeText={setTitle} placeholder="Song title" autoFocus />
-          <Field label="Artist" value={artist} onChangeText={setArtist} placeholder="Optional" />
-          <Label>Status</Label>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: space.md }}>
-            {STATUSES.map((s) => (
-              <Chip key={s} label={REPERTOIRE_LABELS[s]} active={status === s} onPress={() => setStatus(s)} />
+        <Panel style={{ marginBottom: space.lg }}>
+          <Field label="Song" value={title} onChangeText={setTitle} placeholder="Pride and Joy" autoFocus />
+          <Field label="Artist" value={artist} onChangeText={setArtist} placeholder="Stevie Ray Vaughan" />
+          <Text style={{ color: colors.textMuted, fontSize: 14, fontWeight: '600', marginBottom: space.sm }}>Where you're at</Text>
+          <Row gap={space.sm} wrap style={{ marginBottom: space.lg }}>
+            {ORDER.map((s) => (
+              <Pill key={s} label={REPERTOIRE_LABELS[s]} active={status === s} color={STATUS_COLOR[s]} onPress={() => setStatus(s)} />
             ))}
-          </View>
-          <View style={{ flexDirection: 'row', gap: space.sm }}>
+          </Row>
+          <Row gap={space.sm}>
             <Button title="Cancel" kind="secondary" onPress={() => setAdding(false)} style={{ flex: 1 }} />
-            <Button title="Add Song" onPress={add} loading={saving} disabled={!title.trim()} style={{ flex: 2 }} />
-          </View>
-        </Card>
-      ) : (
-        <Button title="Add a Song" onPress={() => setAdding(true)} style={{ marginBottom: space.lg }} />
-      )}
+            <Button title="Add Song" onPress={add} loading={saving} disabled={!title.trim()} style={{ flex: 1.6 }} />
+          </Row>
+        </Panel>
+      ) : null}
 
       {items === null ? (
-        <ActivityIndicator color={colors.gold} style={{ marginTop: space.xl }} />
+        <Loading />
       ) : items.length === 0 && !adding ? (
-        <Empty title="No songs yet" body="Add the songs you play or want to play. They will shape what you practice." />
+        <Panel>
+          <Text style={{ fontFamily: fonts.heading, color: colors.text, fontSize: 22, letterSpacing: -0.4, marginBottom: space.sm }}>Start your song list</Text>
+          <Body muted style={{ marginBottom: space.lg }}>
+            Add the songs you can play and the ones you're chasing. Your list will shape what you practice.
+          </Body>
+          <Button title="Add Your First Song" onPress={() => setAdding(true)} />
+        </Panel>
       ) : (
-        items.map((item) => (
-          <Card key={item.id}>
-            <Text style={{ color: colors.text, fontSize: 17, fontWeight: '700' }}>{item.title}</Text>
-            {item.artist ? <Text style={{ color: colors.textMuted, fontSize: 14, marginBottom: space.sm }}>{item.artist}</Text> : null}
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: space.xs }}>
-              {STATUSES.map((s) => (
-                <Chip key={s} label={REPERTOIRE_LABELS[s]} active={item.status === s} onPress={() => changeStatus(item, s)} />
-              ))}
+        groups.map((g) => (
+          <View key={g.status}>
+            <SectionTitle right={<Small>{g.list.length}</Small>}>{REPERTOIRE_LABELS[g.status]}</SectionTitle>
+            <View style={{ backgroundColor: colors.surface, borderRadius: radius.lg, overflow: 'hidden' }}>
+              {g.list.map((item, i) => {
+                const expanded = open === item.id;
+                return (
+                  <View key={item.id} style={{ borderTopWidth: i === 0 ? 0 : 1, borderTopColor: colors.line }}>
+                    <Pressable
+                      onPress={() => {
+                        select();
+                        setOpen(expanded ? null : item.id);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityState={{ expanded }}
+                      style={({ pressed }) => ({
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        padding: space.lg,
+                        gap: space.md,
+                        backgroundColor: pressed ? colors.surfaceHigh : 'transparent',
+                      })}>
+                      <View style={{ width: 4, alignSelf: 'stretch', borderRadius: 2, backgroundColor: STATUS_COLOR[item.status] }} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontFamily: fonts.heading, color: colors.text, fontSize: 18 }} numberOfLines={1}>
+                          {item.title}
+                        </Text>
+                        {item.artist ? <Small style={{ color: colors.textMuted }}>{item.artist}</Small> : null}
+                      </View>
+                      <Text style={{ color: colors.textFaint, fontSize: 20 }}>{expanded ? '−' : '+'}</Text>
+                    </Pressable>
+                    {expanded ? (
+                      <View style={{ paddingHorizontal: space.lg, paddingBottom: space.lg }}>
+                        <Row gap={space.sm} wrap>
+                          {ORDER.map((s) => (
+                            <Pill key={s} label={REPERTOIRE_LABELS[s]} active={item.status === s} color={STATUS_COLOR[s]} onPress={() => changeStatus(item, s)} />
+                          ))}
+                        </Row>
+                        <Pressable onPress={() => remove(item)} accessibilityRole="button" style={{ alignSelf: 'flex-start', marginTop: space.md, paddingVertical: 4 }}>
+                          <Text style={{ color: colors.candy, fontSize: 15, fontWeight: '600' }}>Remove song</Text>
+                        </Pressable>
+                      </View>
+                    ) : null}
+                  </View>
+                );
+              })}
             </View>
-            <Pressable onPress={() => remove(item)} accessibilityRole="button" style={{ alignSelf: 'flex-start', paddingVertical: space.xs }}>
-              <Text style={{ color: colors.textFaint, fontSize: 13 }}>Remove</Text>
-            </Pressable>
-          </Card>
+          </View>
         ))
       )}
     </Screen>

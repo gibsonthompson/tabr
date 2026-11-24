@@ -1,36 +1,41 @@
-import { Pressable, Text } from 'react-native';
+import type { ReactNode } from 'react';
+import { Pressable, Text, View } from 'react-native';
 import { router, type Href } from 'expo-router';
-import { colors, radius, space } from '@/lib/theme';
-import { Grid2, Screen, Title } from '@/components/ui';
+import { colors, fonts, radius, space } from '@/lib/theme';
+import { ChordGlyph, NotesGlyph, TabGlyph, TunerGlyph } from '@/components/brand';
+import { Grid2, Header, Screen, Small } from '@/components/ui';
 
-const TOOLS: { href: Href; name: string; desc: string }[] = [
-  { href: '/tools/tuner', name: 'Tuner', desc: 'Standard and six alternate tunings' },
-  { href: '/tools/chords', name: 'Chords', desc: 'Blues, rock and open chord shapes' },
-  { href: '/tools/tab-player', name: 'Tab Player', desc: 'Paste a tab and watch it on the neck' },
-  { href: '/tools/notes', name: 'Note Finder', desc: 'Every place a note lives on the neck' },
+const TOOLS: { href: Href; name: string; desc: string; glyph: ReactNode }[] = [
+  { href: '/tools/tuner', name: 'Tuner', desc: 'Standard plus six alternate tunings', glyph: <TunerGlyph size={52} /> },
+  { href: '/tools/chords', name: 'Chords', desc: 'Blues, rock, double stops and open shapes', glyph: <ChordGlyph size={52} /> },
+  { href: '/tools/tab-player', name: 'Tab Player', desc: 'Paste a tab and step through it on the neck', glyph: <TabGlyph size={52} /> },
+  { href: '/tools/notes', name: 'Note Finder', desc: 'Every spot a note lives on the neck', glyph: <NotesGlyph size={52} /> },
 ];
 
 export default function Tools() {
   return (
     <Screen>
-      <Title sub="Everything you need while you play.">Tools</Title>
+      <Header title="Tools" />
       <Grid2>
         {TOOLS.map((t) => (
           <Pressable
             key={t.name}
             onPress={() => router.push(t.href)}
             accessibilityRole="button"
+            accessibilityLabel={`${t.name}. ${t.desc}`}
             style={({ pressed }) => ({
               backgroundColor: colors.surface,
               borderRadius: radius.lg,
-              borderWidth: 1,
-              borderColor: colors.border,
               padding: space.lg,
-              minHeight: 120,
-              opacity: pressed ? 0.8 : 1,
+              minHeight: 176,
+              justifyContent: 'space-between',
+              transform: [{ scale: pressed ? 0.98 : 1 }],
             })}>
-            <Text style={{ color: colors.gold, fontSize: 18, fontWeight: '800', marginBottom: space.xs }}>{t.name}</Text>
-            <Text style={{ color: colors.textMuted, fontSize: 13, lineHeight: 18 }}>{t.desc}</Text>
+            <View>{t.glyph}</View>
+            <View>
+              <Text style={{ fontFamily: fonts.heading, color: colors.text, fontSize: 21, letterSpacing: -0.4, marginBottom: 2 }}>{t.name}</Text>
+              <Small>{t.desc}</Small>
+            </View>
           </Pressable>
         ))}
       </Grid2>

@@ -1,17 +1,22 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
+import { router } from 'expo-router';
 import { CHORD_CATEGORIES, CHORDS, type ChordCategoryId, type ChordShape } from '@/lib/music/chords';
 import { STANDARD_STRINGS, noteAt } from '@/lib/music/theory';
 import type { TabNote } from '@/lib/music/tabParser';
-import { colors, fingerColors, fingerNames, radius, space } from '@/lib/theme';
+import { select } from '@/lib/haptics';
+import { colors, fingerColors, fingerNames, fonts, radius, space } from '@/lib/theme';
 import Fretboard from '@/components/Fretboard';
-import { Body, Card, Chip, Grid2, Label, Screen } from '@/components/ui';
+import { BackHeader, Body, Grid2, Panel, Pill, Screen, SectionTitle, Small } from '@/components/ui';
 
 function toNotes(chord: ChordShape): TabNote[] {
   return chord.frets.flatMap((fret, string) =>
     fret === null ? [] : [{ string, fret, finger: chord.fingers[string] ?? 0, type: 'note' as const, technique: null, vibrato: false }],
   );
 }
+
+/** x32010 style: 6th string first, the way chord charts write it. */
+const notation = (c: ChordShape) => [...c.frets].reverse().map((f) => (f === null ? 'x' : String(f))).join('');
 
 export default function Chords() {
   const [category, setCategory] = useState<ChordCategoryId>('blues');
@@ -22,10 +27,12 @@ export default function Chords() {
   const muted = chord.frets.flatMap((f, i) => (f === null ? [i] : []));
 
   return (
-    <Screen edges={['bottom']}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+    <Screen edges={['top', 'bottom']}>
+      <BackHeader title="Chords" onBack={() => router.back()} />
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
         {CHORD_CATEGORIES.map((c) => (
-          <Chip
+          <Pill
             key={c.id}
             label={c.name}
             active={c.id === category}
@@ -36,73 +43,78 @@ export default function Chords() {
           />
         ))}
       </ScrollView>
-      <Body muted style={{ marginBottom: space.md }}>
+      <Body muted style={{ marginTop: space.md }}>
         {cat.desc}
       </Body>
 
-      <Text style={{ color: colors.gold, fontSize: 28, fontWeight: '900', textAlign: 'center' }}>{chord.name}</Text>
-      <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center', marginBottom: space.sm }}>{chord.context}</Text>
-      <Fretboard notes={toNotes(chord)} mutedStrings={muted} minFrets={7} />
-      {muted.length ? (
-        <Text style={{ color: colors.danger, fontSize: 13, textAlign: 'center', marginTop: space.xs }}>
-          Don't strum: {muted.map((s) => `${STANDARD_STRINGS[s].name} (${STANDARD_STRINGS[s].num})`).join(', ')}
-        </Text>
-      ) : null}
+      <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: space.xl }}>
+        <Text style={{ fontFamily: fonts.display, color: colors.text, fontSize: 56, letterSpacing: -2.4, lineHeight: 60 }}>{chord.name}</Text>
+        <Text style={{ fontFamily: fonts.monoBold, color: colors.textMuted, fontSize: 18, letterSpacing: 2 }}>{notation(chord)}</Text>
+      </View>
+      <Body muted>{chord.context}</Body>
 
-      <Card style={{ marginTop: space.md }}>
+      <View style={{ marginVertical: space.lg, marginHorizontal: -4 }}>
+        <Fretboard notes={toNotes(chord)} mutedStrings={muted} minFrets={7} />
+      </View>
+
+      <Panel>
         <Body>{chord.desc}</Body>
-        {chord.basedOn ? <Body muted style={{ marginTop: space.xs, fontStyle: 'italic' }}>{chord.basedOn}</Body> : null}
-        <View style={{ marginTop: space.md }}>
+        <View style={{ marginTop: space.lg, gap: space.sm }}>
           {chord.frets.map((fret, i) => {
-            if (fret === null) return null;
             const finger = chord.fingers[i] ?? 0;
+            const s = STANDARD_STRINGS[i];
             return (
-              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 3 }}>
+              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
                 <View
                   style={{
-                    width: 18,
-                    height: 18,
-                    borderRadius: 9,
-                    marginRight: space.sm,
-                    backgroundColor: finger ? fingerColors[finger] : 'transparent',
-                    borderWidth: finger ? 0 : 2,
-                    borderColor: colors.gold,
-                  }}
-                />
-                <Text style={{ color: colors.text, fontSize: 14 }}>
-                  {STANDARD_STRINGS[i].num} string ({STANDARD_STRINGS[i].name}): {fret === 0 ? 'open' : `fret ${fret}, ${fingerNames[finger].toLowerCase()} finger`}{' '}
-                  <Text style={{ color: colors.textMuted }}>= {noteAt(i, fret)}</Text>
+                    width: 26,
+                    height: 26,
+                    borderRadius: 13,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: fret === null ? 'transparent' : finger ? fingerColors[finger] : 'transparent',
+                    borderWidth: fret === null || finger ? 0 : 2,
+                    borderColor: colors.olympic,
+                  }}>
+                  <Text style={{ fontWeight: '800', fontSize: 12, color: fret === null ? colors.candy : finger ? colors.ink : colors.olympic }}>
+                    {fret === null ? '✕' : finger || 'o'}
+                  </Text>
+                </View>
+                <Text style={{ fontFamily: fonts.heading, color: colors.text, fontSize: 16, width: 64 }}>
+                  {s.num} {s.name}
+                </Text>
+                <Text style={{ color: fret === null ? colors.textFaint : colors.textMuted, fontSize: 15, flex: 1 }}>
+                  {fret === null ? "Don't play" : fret === 0 ? `Open, ${noteAt(i, 0)}` : `Fret ${fret}, ${fingerNames[finger].toLowerCase()}, ${noteAt(i, fret)}`}
                 </Text>
               </View>
             );
           })}
         </View>
-      </Card>
+        {chord.basedOn ? <Small style={{ marginTop: space.lg }}>{chord.basedOn}</Small> : null}
+      </Panel>
 
-      <Label>{`${cat.name} (${list.length})`}</Label>
-      <Grid2>
+      <SectionTitle>{`${cat.name}`}</SectionTitle>
+      <Grid2 gap={space.sm}>
         {list.map((c) => {
           const active = c.name === chord.name;
           return (
             <Pressable
               key={c.name}
-              onPress={() => setSelectedName(c.name)}
+              onPress={() => {
+                select();
+                setSelectedName(c.name);
+              }}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
               style={{
-                padding: space.md,
+                padding: space.md + 2,
                 borderRadius: radius.md,
-                borderWidth: 1,
-                borderColor: active ? colors.gold : colors.border,
-                backgroundColor: active ? 'rgba(212,175,55,0.12)' : colors.surface,
+                backgroundColor: active ? colors.olympic : colors.surface,
               }}>
-              <Text style={{ color: colors.gold, fontSize: 16, fontWeight: '800' }}>{c.name}</Text>
-              <Text style={{ color: colors.textFaint, fontSize: 11, letterSpacing: 1, fontVariant: ['tabular-nums'] }}>
-                {[...c.frets].reverse().map((f) => (f === null ? 'x' : f)).join(' ')}
+              <Text style={{ fontFamily: fonts.heading, color: active ? colors.ink : colors.text, fontSize: 19 }} numberOfLines={1}>
+                {c.name}
               </Text>
-              <Text style={{ color: colors.textMuted, fontSize: 11 }} numberOfLines={1}>
-                {c.context}
-              </Text>
+              <Text style={{ fontFamily: fonts.mono, color: active ? colors.ink : colors.textFaint, fontSize: 13, letterSpacing: 1.5, marginTop: 2 }}>{notation(c)}</Text>
             </Pressable>
           );
         })}

@@ -34,10 +34,10 @@ export type Skill = {
 
 export type RepertoireStatus = 'want_to_learn' | 'learning' | 'can_play' | 'performance_ready';
 export const REPERTOIRE_LABELS: Record<RepertoireStatus, string> = {
-  want_to_learn: 'Want to learn',
+  want_to_learn: 'Want to Learn',
   learning: 'Learning',
-  can_play: 'Can play',
-  performance_ready: 'Performance ready',
+  can_play: 'Can Play',
+  performance_ready: 'Performance Ready',
 };
 
 export type RepertoireItem = {

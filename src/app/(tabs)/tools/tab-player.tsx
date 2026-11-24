@@ -1,16 +1,43 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, Text, TextInput, View } from 'react-native';
+import { router } from 'expo-router';
 import { SAMPLE_CHORDS, SAMPLE_TECHNIQUES, TECHNIQUE_INFO, parseTab } from '@/lib/music/tabParser';
 import { STANDARD_STRINGS, noteAt } from '@/lib/music/theory';
-import { colors, fingerColors, radius, space } from '@/lib/theme';
+import { tap } from '@/lib/haptics';
+import { colors, fingerColors, fonts, radius, space } from '@/lib/theme';
 import Fretboard from '@/components/Fretboard';
-import { Body, Button, Card, Chip, Empty, Label, Screen } from '@/components/ui';
+import { TransportIcon } from '@/components/brand';
+import { BackHeader, Body, Panel, Pill, Row, Screen, SectionTitle, Segmented, Small } from '@/components/ui';
 
 const SPEEDS = [
-  { label: '0.5x', ms: 800 },
-  { label: '1x', ms: 400 },
-  { label: '2x', ms: 200 },
+  { value: 800, label: 'Slow' },
+  { value: 400, label: 'Normal' },
+  { value: 200, label: 'Fast' },
 ];
+
+function RoundButton({ kind, onPress, big, label }: { kind: 'play' | 'pause' | 'prev' | 'next' | 'restart'; onPress: () => void; big?: boolean; label: string }) {
+  const size = big ? 76 : 54;
+  return (
+    <Pressable
+      onPress={() => {
+        tap();
+        onPress();
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => ({
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: big ? colors.olympic : colors.surface,
+        alignItems: 'center',
+        justifyContent: 'center',
+        transform: [{ scale: pressed ? 0.94 : 1 }],
+      })}>
+      <TransportIcon kind={kind} size={big ? 32 : 22} color={big ? colors.ink : colors.text} />
+    </Pressable>
+  );
+}
 
 export default function TabPlayer() {
   const [text, setText] = useState(SAMPLE_CHORDS);
@@ -18,8 +45,8 @@ export default function TabPlayer() {
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(400);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [barWidth, setBarWidth] = useState(0);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setIndex(0);
@@ -28,7 +55,7 @@ export default function TabPlayer() {
 
   useEffect(() => {
     if (!playing || !steps.length) return;
-    // Wider gaps between numbers in the tab hold longer (4 dashes = one beat at this speed).
+    // Wider gaps in the tab hold longer: 4 dashes is one beat at the chosen speed.
     const delay = speed * ((steps[index]?.durationWeight ?? 4) / 4);
     timer.current = setTimeout(() => {
       if (index >= steps.length - 1) setPlaying(false);
@@ -40,15 +67,100 @@ export default function TabPlayer() {
   }, [playing, index, speed, steps]);
 
   const step = steps[index];
-  const techniques = [...new Set((step?.notes ?? []).flatMap((n) => [n.technique, n.type !== 'note' ? n.type : null]).filter(Boolean))] as (keyof typeof TECHNIQUE_INFO)[];
+  const techniques = [
+    ...new Set((step?.notes ?? []).flatMap((n) => [n.technique, n.type !== 'note' ? n.type : null]).filter(Boolean)),
+  ] as (keyof typeof TECHNIQUE_INFO)[];
 
   return (
-    <Screen edges={['bottom']}>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-        <Chip label="Chord sample" onPress={() => setText(SAMPLE_CHORDS)} active={text === SAMPLE_CHORDS} />
-        <Chip label="Techniques sample" onPress={() => setText(SAMPLE_TECHNIQUES)} active={text === SAMPLE_TECHNIQUES} />
-        <Chip label="Clear" onPress={() => setText('')} />
-      </View>
+    <Screen edges={['top', 'bottom']}>
+      <BackHeader title="Tab Player" onBack={() => router.back()} />
+
+      {steps.length ? (
+        <>
+          <View style={{ marginHorizontal: -4 }}>
+            <Fretboard notes={step?.notes ?? []} />
+          </View>
+
+          <Pressable
+            accessibilityRole="adjustable"
+            accessibilityLabel={`Step ${index + 1} of ${steps.length}`}
+            onLayout={(e) => setBarWidth(e.nativeEvent.layout.width)}
+            onPress={(e) => {
+              if (barWidth > 0) setIndex(Math.min(steps.length - 1, Math.max(0, Math.floor((e.nativeEvent.locationX / barWidth) * steps.length))));
+            }}
+            style={{ height: 28, justifyContent: 'center', marginTop: space.md }}>
+            <View style={{ height: 6, backgroundColor: colors.surface, borderRadius: 3, flexDirection: 'row', gap: 2, overflow: 'hidden' }}>
+              {steps.map((_, i) => (
+                <View key={i} style={{ flex: 1, backgroundColor: i <= index ? colors.daphne : colors.surfaceHigh }} />
+              ))}
+            </View>
+          </Pressable>
+          <Row style={{ justifyContent: 'space-between' }}>
+            <Small>
+              Step {index + 1} of {steps.length}
+            </Small>
+            <Small>Tap the bar to jump</Small>
+          </Row>
+
+          <Row gap={space.lg} style={{ justifyContent: 'center', marginVertical: space.xl }}>
+            <RoundButton kind="restart" label="Start over" onPress={() => { setIndex(0); setPlaying(false); }} />
+            <RoundButton kind="prev" label="Previous step" onPress={() => setIndex(Math.max(0, index - 1))} />
+            <RoundButton
+              kind={playing ? 'pause' : 'play'}
+              big
+              label={playing ? 'Pause' : 'Play'}
+              onPress={() => {
+                if (!playing && index >= steps.length - 1) setIndex(0);
+                setPlaying(!playing);
+              }}
+            />
+            <RoundButton kind="next" label="Next step" onPress={() => setIndex(Math.min(steps.length - 1, index + 1))} />
+          </Row>
+
+          <Segmented options={SPEEDS} value={speed} onChange={setSpeed} />
+
+          <Panel style={{ marginTop: space.lg }}>
+            <View style={{ gap: space.sm }}>
+              {(step?.notes ?? [])
+                .slice()
+                .sort((a, b) => b.string - a.string)
+                .map((n, i) => (
+                  <Row key={i} gap={space.md}>
+                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: n.finger ? fingerColors[n.finger] : colors.olympic }} />
+                    <Text style={{ fontFamily: fonts.heading, color: colors.text, fontSize: 16, width: 64 }}>
+                      {STANDARD_STRINGS[n.string].num} {STANDARD_STRINGS[n.string].name}
+                    </Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 15, flex: 1 }}>
+                      {n.type === 'mute'
+                        ? 'Muted hit'
+                        : n.fret === 0
+                          ? `Open, ${noteAt(n.string, 0)}`
+                          : `Fret ${n.fret}${n.bendTo !== undefined ? `, bend to sound like ${n.bendTo}` : ''}, ${noteAt(n.string, n.bendTo ?? n.fret)}`}
+                    </Text>
+                  </Row>
+                ))}
+            </View>
+            {techniques.map((t) => (
+              <Body key={t} muted style={{ marginTop: space.md }}>
+                <Text style={{ color: colors.text, fontWeight: '700' }}>{TECHNIQUE_INFO[t].label}. </Text>
+                {TECHNIQUE_INFO[t].desc}
+              </Body>
+            ))}
+          </Panel>
+        </>
+      ) : (
+        <Panel>
+          <Body>Paste a tab below to see it on the neck.</Body>
+          <Small style={{ marginTop: space.xs }}>It needs all six string lines, from e at the top to E at the bottom.</Small>
+        </Panel>
+      )}
+
+      <SectionTitle right={<Small>Try a sample or paste your own</Small>}>Your Tab</SectionTitle>
+      <Row gap={space.sm} wrap style={{ marginBottom: space.md }}>
+        <Pill label="Chords" onPress={() => setText(SAMPLE_CHORDS)} active={text === SAMPLE_CHORDS} />
+        <Pill label="Techniques" onPress={() => setText(SAMPLE_TECHNIQUES)} active={text === SAMPLE_TECHNIQUES} />
+        <Pill label="Clear" onPress={() => setText('')} />
+      </Row>
       <TextInput
         value={text}
         onChangeText={setText}
@@ -56,83 +168,24 @@ export default function TabPlayer() {
         autoCapitalize="none"
         autoCorrect={false}
         spellCheck={false}
-        placeholder={'Paste a 6-line tab, for example:\ne|---0---2h4---|\nB|---1---3-----|'}
+        placeholder={'e|---0---2h4---|\nB|---1---3-----|\nG|---0---2-----|\nD|---2---0-----|\nA|---3---------|\nE|-------------|'}
         placeholderTextColor={colors.textFaint}
         accessibilityLabel="Tab text"
         style={{
-          fontFamily: Platform.select({ ios: 'Menlo', default: 'monospace' }),
-          fontSize: 12,
+          fontFamily: Platform.select({ web: 'monospace', default: fonts.mono }),
+          fontSize: 12.5,
+          lineHeight: 19,
           color: colors.text,
           backgroundColor: colors.surface,
-          borderColor: colors.border,
-          borderWidth: 1,
           borderRadius: radius.md,
-          padding: space.md,
+          padding: space.lg,
           minHeight: 150,
           textAlignVertical: 'top',
-          marginBottom: space.md,
         }}
       />
-
-      {!steps.length ? (
-        <Empty title="Nothing to play yet" body="Paste a tab with all six string lines (e B G D A E) to see it on the neck." />
-      ) : (
-        <>
-          <Fretboard notes={step?.notes ?? []} />
-
-          <Card style={{ marginTop: space.md }}>
-            <Label>{`Step ${index + 1} of ${steps.length}`}</Label>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.md }}>
-              {(step?.notes ?? []).map((n, i) => (
-                <Text key={i} style={{ color: n.finger ? fingerColors[n.finger] : colors.gold, fontWeight: '700', fontSize: 14 }}>
-                  {STANDARD_STRINGS[n.string].num} {n.type === 'mute' ? 'muted' : n.fret === 0 ? 'open' : `fret ${n.fret}`}
-                  {n.fret >= 0 && n.type !== 'mute' ? ` (${noteAt(n.string, n.bendTo ?? n.fret)})` : ''}
-                </Text>
-              ))}
-            </View>
-            {techniques.map((t) => (
-              <Body key={t} muted style={{ marginTop: space.sm }}>
-                <Text style={{ color: colors.gold, fontWeight: '700' }}>{TECHNIQUE_INFO[t].label}: </Text>
-                {TECHNIQUE_INFO[t].desc}
-              </Body>
-            ))}
-          </Card>
-
-          <Pressable
-            accessibilityRole="adjustable"
-            accessibilityLabel="Position in tab"
-            onLayout={(e) => setBarWidth(e.nativeEvent.layout.width)}
-            onPress={(e) => {
-              if (barWidth > 0) setIndex(Math.min(steps.length - 1, Math.max(0, Math.floor((e.nativeEvent.locationX / barWidth) * steps.length))));
-            }}
-            style={{ height: 24, justifyContent: 'center', marginBottom: space.md }}>
-            <View style={{ height: 4, backgroundColor: colors.surfaceRaised, borderRadius: 2 }}>
-              <View style={{ height: 4, width: `${((index + 1) / steps.length) * 100}%`, backgroundColor: colors.gold, borderRadius: 2 }} />
-            </View>
-          </Pressable>
-
-          <View style={{ flexDirection: 'row', gap: space.sm, marginBottom: space.md }}>
-            <Button title="Back" kind="secondary" onPress={() => setIndex(Math.max(0, index - 1))} style={{ flex: 1 }} />
-            <Button
-              title={playing ? 'Pause' : 'Play'}
-              onPress={() => {
-                if (!playing && index >= steps.length - 1) setIndex(0);
-                setPlaying(!playing);
-              }}
-              style={{ flex: 1.4 }}
-            />
-            <Button title="Next" kind="secondary" onPress={() => setIndex(Math.min(steps.length - 1, index + 1))} style={{ flex: 1 }} />
-          </View>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-            {SPEEDS.map((s) => (
-              <Chip key={s.label} label={s.label} active={speed === s.ms} onPress={() => setSpeed(s.ms)} />
-            ))}
-          </View>
-          <Body muted style={{ fontSize: 12 }}>
-            Fingers shown are a suggestion (one finger per fret). Tabs with screenshots and audio playback come later.
-          </Body>
-        </>
-      )}
+      <Small style={{ marginTop: space.md }}>
+        Reads h, p, slides, bends, releases, mutes, vibrato, taps, harmonics and ghost notes. Fingers shown are a suggestion: one finger per fret.
+      </Small>
     </Screen>
   );
 }

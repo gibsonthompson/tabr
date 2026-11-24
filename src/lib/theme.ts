@@ -1,37 +1,56 @@
-// Temporary working palette (carried over from the web prototype). Not final branding.
+/**
+ * tabr design tokens.
+ * Base: Sherwood Green (a vintage guitar finish), not black.
+ * The four finger colors are classic custom-shop finishes and double as the brand palette.
+ */
 export const colors = {
-  bg: '#140805',
-  surface: '#22100A',
-  surfaceRaised: '#2E160D',
-  border: 'rgba(212,175,55,0.16)',
-  borderStrong: 'rgba(212,175,55,0.4)',
-  text: '#EDE3D1',
-  textMuted: '#A08A6A',
-  textFaint: '#6B5940',
-  gold: '#D4AF37',
-  cherry: '#C41E3A',
-  cream: '#EDDCB1',
-  amber: '#CC7722',
-  green: '#8FBC44',
-  danger: '#E05A4F',
-  wood: '#3E2723',
-  woodLight: '#4E342E',
-  fretWire: '#BFBFBF',
-  string: '#C8C0B8',
-  stringWound: '#B8B0A8',
+  bg: '#16231E', // Sherwood, deep
+  surface: '#1F3029', // raised panel
+  surfaceHigh: '#2A3F36', // pressed / selected / input
+  line: 'rgba(238,234,224,0.09)',
+  text: '#EEEAE0', // Olympic White
+  textMuted: '#A9B8B0',
+  textFaint: '#71857B',
+  ink: '#10201A', // text on light fills
+
+  daphne: '#86BDE3', // Daphne Blue, index finger
+  shell: '#F2AFA6', // Shell Pink, middle finger
+  sunburst: '#F1B84B', // Sunburst Amber, ring finger
+  olympic: '#EEEAE0', // Olympic White, pinky finger
+
+  surf: '#7EE0B5', // Surf Green, in tune / success
+  candy: '#F0646B', // Candy Apple Red, don't play / errors
+
+  // fretboard materials
+  ebony: '#14110F',
+  ebonyEdge: '#26201C',
+  nickel: '#B9BCB6',
+  bone: '#E9E2D0',
+  pearl: '#D9D4C7',
+  plainString: '#D7D9D4',
+  woundString: '#B7AE9A',
 };
 
-export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 };
-export const radius = { sm: 6, md: 10, lg: 14 };
+export const fonts = {
+  display: 'BricolageGrotesque_800ExtraBold',
+  heading: 'BricolageGrotesque_700Bold',
+  headingMedium: 'BricolageGrotesque_600SemiBold',
+  mono: 'JetBrainsMono_500Medium',
+  monoBold: 'JetBrainsMono_700Bold',
+};
+
+export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, huge: 48 };
+export const radius = { sm: 10, md: 14, lg: 22, pill: 999 };
 
 /** Finger colors: 0 open, 1 index, 2 middle, 3 ring, 4 pinky. */
 export const fingerColors: Record<number, string> = {
   0: 'transparent',
-  1: colors.gold,
-  2: colors.cherry,
-  3: colors.cream,
-  4: colors.amber,
+  1: colors.daphne,
+  2: colors.shell,
+  3: colors.sunburst,
+  4: colors.olympic,
 };
+
 export const fingerNames: Record<number, string> = {
   0: 'Open',
   1: 'Index',

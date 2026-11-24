@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -7,48 +7,103 @@ import {
   Text,
   TextInput,
   View,
+  type StyleProp,
   type TextInputProps,
+  type TextStyle,
   type ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, radius, space } from '@/lib/theme';
+import Svg, { Path } from 'react-native-svg';
+import { colors, fonts, radius, space } from '@/lib/theme';
+import { select, tap } from '@/lib/haptics';
 
-export function Screen({ children, scroll = true, edges }: { children: ReactNode; scroll?: boolean; edges?: ('top' | 'bottom')[] }) {
+export function Screen({
+  children,
+  scroll = true,
+  edges,
+  padded = true,
+}: {
+  children: ReactNode;
+  scroll?: boolean;
+  edges?: ('top' | 'bottom')[];
+  padded?: boolean;
+}) {
+  const content = [padded && styles.content];
   return (
     <SafeAreaView style={styles.screen} edges={edges ?? ['top']}>
       {scroll ? (
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {children}
         </ScrollView>
       ) : (
-        <View style={[styles.content, { flex: 1 }]}>{children}</View>
+        <View style={[content, { flex: 1 }]}>{children}</View>
       )}
     </SafeAreaView>
   );
 }
 
-export function Title({ children, sub }: { children: string; sub?: string }) {
+/** Big screen title. Optional line above (date, greeting) and a right-side slot. */
+export function Header({ title, kicker, right }: { title: string; kicker?: string; right?: ReactNode }) {
   return (
-    <View style={{ marginBottom: space.lg }}>
-      <Text style={styles.title} accessibilityRole="header">
-        {children}
-      </Text>
-      {sub ? <Text style={styles.sub}>{sub}</Text> : null}
+    <View style={styles.header}>
+      <View style={{ flex: 1 }}>
+        {kicker ? <Text style={styles.kicker}>{kicker}</Text> : null}
+        <Text style={styles.title} accessibilityRole="header" numberOfLines={2}>
+          {title}
+        </Text>
+      </View>
+      {right}
     </View>
   );
 }
 
-export function Label({ children }: { children: string }) {
-  return <Text style={styles.label}>{children}</Text>;
+/** Title row for screens pushed onto a stack: back control above a big title. */
+export function BackHeader({ title, sub, onBack }: { title: string; sub?: string; onBack: () => void }) {
+  return (
+    <View style={{ marginBottom: space.lg }}>
+      <Pressable
+        onPress={onBack}
+        accessibilityRole="button"
+        accessibilityLabel="Back"
+        hitSlop={12}
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', opacity: pressed ? 0.6 : 1, paddingVertical: 6, marginBottom: space.sm })}>
+        <Svg width={10} height={16} viewBox="0 0 10 16">
+          <Path d="M8 2 2 8l6 6" stroke={colors.textMuted} strokeWidth={2.4} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        </Svg>
+        <Text style={{ color: colors.textMuted, fontSize: 16, fontWeight: '600', marginLeft: 6 }}>Tools</Text>
+      </Pressable>
+      <Text style={styles.title} accessibilityRole="header">
+        {title}
+      </Text>
+      {sub ? <Text style={[styles.kicker, { marginTop: 4 }]}>{sub}</Text> : null}
+    </View>
+  );
 }
 
-export function Body({ children, muted, style }: { children: ReactNode; muted?: boolean; style?: object }) {
-  return <Text style={[styles.body, muted && { color: colors.textMuted }, style]}>{children}</Text>;
+export function SectionTitle({ children, right }: { children: string; right?: ReactNode }) {
+  return (
+    <View style={styles.sectionRow}>
+      <Text style={styles.section} accessibilityRole="header">
+        {children}
+      </Text>
+      {right}
+    </View>
+  );
 }
 
-export function Card({ children, style }: { children: ReactNode; style?: ViewStyle }) {
-  return <View style={[styles.card, style]}>{children}</View>;
+export function Body({ children, muted, faint, style }: { children: ReactNode; muted?: boolean; faint?: boolean; style?: StyleProp<TextStyle> }) {
+  return <Text style={[styles.body, muted && { color: colors.textMuted }, faint && { color: colors.textFaint }, style]}>{children}</Text>;
 }
+
+export function Small({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) {
+  return <Text style={[styles.small, style]}>{children}</Text>;
+}
+
+export function Panel({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
+  return <View style={[styles.panel, style]}>{children}</View>;
+}
+
+type ButtonKind = 'primary' | 'secondary' | 'quiet' | 'danger';
 
 export function Button({
   title,
@@ -57,82 +112,142 @@ export function Button({
   loading,
   disabled,
   style,
+  size = 'lg',
 }: {
   title: string;
   onPress: () => void;
-  kind?: 'primary' | 'secondary' | 'danger';
+  kind?: ButtonKind;
   loading?: boolean;
   disabled?: boolean;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
+  size?: 'lg' | 'sm';
 }) {
-  const bg = kind === 'primary' ? colors.gold : kind === 'danger' ? 'transparent' : colors.surfaceRaised;
-  const fg = kind === 'primary' ? colors.bg : kind === 'danger' ? colors.danger : colors.text;
+  const bg = { primary: colors.olympic, secondary: colors.surfaceHigh, quiet: 'transparent', danger: 'transparent' }[kind];
+  const fg = { primary: colors.ink, secondary: colors.text, quiet: colors.textMuted, danger: colors.candy }[kind];
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        tap();
+        onPress();
+      }}
       disabled={disabled || loading}
       accessibilityRole="button"
       accessibilityState={{ disabled: !!(disabled || loading), busy: !!loading }}
       style={({ pressed }) => [
         styles.button,
-        { backgroundColor: bg, opacity: disabled ? 0.45 : pressed ? 0.8 : 1 },
-        kind === 'danger' && { borderWidth: 1, borderColor: colors.danger },
-        kind === 'secondary' && { borderWidth: 1, borderColor: colors.border },
+        size === 'sm' && styles.buttonSm,
+        { backgroundColor: bg, opacity: disabled ? 0.4 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
         style,
       ]}>
-      {loading ? <ActivityIndicator color={fg} /> : <Text style={[styles.buttonText, { color: fg }]}>{title}</Text>}
+      {loading ? (
+        <ActivityIndicator color={fg} />
+      ) : (
+        <Text style={[styles.buttonText, size === 'sm' && { fontSize: 15 }, { color: fg }]}>{title}</Text>
+      )}
     </Pressable>
   );
 }
 
-export function Chip({ label, active, onPress }: { label: string; active?: boolean; onPress: () => void }) {
+/** Pill choice. Use inside a Row or ScrollView. */
+export function Pill({ label, active, onPress, color }: { label: string; active?: boolean; onPress: () => void; color?: string }) {
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        select();
+        onPress();
+      }}
       accessibilityRole="button"
       accessibilityState={{ selected: !!active }}
-      style={[styles.chip, active && { backgroundColor: 'rgba(212,175,55,0.16)', borderColor: colors.borderStrong }]}>
-      <Text style={[styles.chipText, active && { color: colors.gold }]}>{label}</Text>
+      style={({ pressed }) => [
+        styles.pill,
+        active && { backgroundColor: color ?? colors.olympic },
+        pressed && !active && { backgroundColor: colors.surfaceHigh },
+      ]}>
+      <Text style={[styles.pillText, active && { color: colors.ink }]}>{label}</Text>
     </Pressable>
   );
 }
 
-export function Field({ label, ...props }: TextInputProps & { label: string }) {
+/** Equal-width segmented control. */
+export function Segmented<T extends string | number>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: T; label: string }[];
+  value: T | null;
+  onChange: (v: T) => void;
+}) {
   return (
-    <View style={{ marginBottom: space.md }}>
-      <Label>{label}</Label>
-      <TextInput placeholderTextColor={colors.textFaint} style={styles.input} accessibilityLabel={label} {...props} />
+    <View style={styles.segmented} accessibilityRole="radiogroup">
+      {options.map((o) => {
+        const active = o.value === value;
+        return (
+          <Pressable
+            key={String(o.value)}
+            onPress={() => {
+              select();
+              onChange(o.value);
+            }}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: active }}
+            style={[styles.segment, active && { backgroundColor: colors.olympic }]}>
+            <Text style={[styles.segmentText, active && { color: colors.ink }]} numberOfLines={1}>
+              {o.label}
+            </Text>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
 
-export function Empty({ title, body }: { title: string; body: string }) {
+export function Field({ label, hint, ...props }: TextInputProps & { label: string; hint?: string }) {
+  const [focused, setFocused] = useState(false);
   return (
-    <Card style={{ alignItems: 'center', paddingVertical: space.xl }}>
-      <Text style={[styles.body, { fontWeight: '700', marginBottom: space.xs }]}>{title}</Text>
-      <Text style={[styles.body, { color: colors.textMuted, textAlign: 'center' }]}>{body}</Text>
-    </Card>
+    <View style={{ marginBottom: space.lg }}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <TextInput
+        placeholderTextColor={colors.textFaint}
+        accessibilityLabel={label}
+        {...props}
+        onFocus={(e) => {
+          setFocused(true);
+          props.onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          setFocused(false);
+          props.onBlur?.(e);
+        }}
+        style={[styles.input, focused && styles.inputFocused, props.multiline && { minHeight: 96, textAlignVertical: 'top' }, props.style]}
+      />
+      {hint ? <Small style={{ marginTop: space.xs }}>{hint}</Small> : null}
+    </View>
   );
 }
 
 export function ErrorText({ children }: { children: string | null }) {
   if (!children) return null;
   return (
-    <Text style={{ color: colors.danger, marginBottom: space.md }} accessibilityLiveRegion="polite">
+    <Text style={styles.error} accessibilityLiveRegion="polite">
       {children}
     </Text>
   );
 }
 
-/** Two-column grid. An odd last item spans the full row so no row has a lone half-width item. */
-export function Grid2({ children }: { children: ReactNode[] }) {
+export function Loading() {
+  return <ActivityIndicator color={colors.textMuted} style={{ marginTop: space.huge }} />;
+}
+
+/** Two columns. An odd last item spans the full row. */
+export function Grid2({ children, gap = space.md }: { children: ReactNode[]; gap?: number }) {
   const items = children.filter(Boolean);
   return (
-    <View style={styles.grid}>
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap }}>
       {items.map((child, i) => {
         const lastOdd = items.length % 2 === 1 && i === items.length - 1;
         return (
-          <View key={i} style={lastOdd ? { width: '100%' } : { width: '48.5%' }}>
+          <View key={i} style={lastOdd ? { width: '100%' } : { flexBasis: '40%', flexGrow: 1 }}>
             {child}
           </View>
         );
@@ -141,46 +256,54 @@ export function Grid2({ children }: { children: ReactNode[] }) {
   );
 }
 
+export function Row({ children, gap = space.sm, wrap, style }: { children: ReactNode; gap?: number; wrap?: boolean; style?: StyleProp<ViewStyle> }) {
+  return <View style={[{ flexDirection: 'row', alignItems: 'center', gap, flexWrap: wrap ? 'wrap' : 'nowrap' }, style]}>{children}</View>;
+}
+
+export const textStyles = StyleSheet.create({
+  display: { fontFamily: fonts.display, color: colors.text, letterSpacing: -1.5 },
+  heading: { fontFamily: fonts.heading, color: colors.text, letterSpacing: -0.4 },
+  mono: { fontFamily: fonts.mono, color: colors.text },
+});
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: space.lg, paddingBottom: space.xxl * 2 },
-  title: { color: colors.text, fontSize: 30, fontWeight: '800', letterSpacing: -0.5 },
-  sub: { color: colors.textMuted, fontSize: 14, marginTop: space.xs, lineHeight: 20 },
-  label: { color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: space.sm },
-  body: { color: colors.text, fontSize: 15, lineHeight: 22 },
-  card: {
+  content: { paddingHorizontal: space.xl - 4, paddingTop: space.md, paddingBottom: space.huge * 2 },
+  header: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: space.xl, gap: space.md },
+  kicker: { color: colors.textMuted, fontSize: 15, marginBottom: 2 },
+  title: { fontFamily: fonts.display, color: colors.text, fontSize: 40, lineHeight: 44, letterSpacing: -1.6 },
+  sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: space.xl, marginBottom: space.md },
+  section: { fontFamily: fonts.heading, color: colors.text, fontSize: 20, letterSpacing: -0.4 },
+  body: { color: colors.text, fontSize: 16, lineHeight: 23 },
+  small: { color: colors.textFaint, fontSize: 13, lineHeight: 18 },
+  panel: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space.lg + 2 },
+  button: { borderRadius: radius.pill, paddingVertical: 16, paddingHorizontal: space.xl, alignItems: 'center', justifyContent: 'center', minHeight: 54 },
+  buttonSm: { paddingVertical: 9, paddingHorizontal: space.lg, minHeight: 38 },
+  buttonText: { fontSize: 17, fontWeight: '700', letterSpacing: -0.2 },
+  pill: {
+    borderRadius: radius.pill,
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: space.lg,
-    marginBottom: space.md,
-  },
-  button: { borderRadius: radius.md, paddingVertical: 14, paddingHorizontal: space.lg, alignItems: 'center', justifyContent: 'center', minHeight: 48 },
-  buttonText: { fontSize: 16, fontWeight: '700' },
-  chip: {
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    marginRight: space.sm,
-    marginBottom: space.sm,
-    minHeight: 36,
+    paddingVertical: 9,
+    paddingHorizontal: 15,
+    minHeight: 38,
     justifyContent: 'center',
   },
-  chipText: { color: colors.textMuted, fontSize: 13, fontWeight: '600' },
+  pillText: { color: colors.text, fontSize: 14, fontWeight: '600' },
+  segmented: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: radius.pill, padding: 4 },
+  segment: { flex: 1, borderRadius: radius.pill, paddingVertical: 9, alignItems: 'center', justifyContent: 'center', minHeight: 38 },
+  segmentText: { color: colors.textMuted, fontSize: 14, fontWeight: '700' },
+  fieldLabel: { color: colors.textMuted, fontSize: 14, fontWeight: '600', marginBottom: space.sm },
   input: {
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: radius.md,
     color: colors.text,
-    fontSize: 16,
-    paddingHorizontal: space.md,
-    paddingVertical: 12,
-    minHeight: 48,
+    fontSize: 17,
+    paddingHorizontal: space.lg,
+    paddingVertical: 14,
+    minHeight: 52,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
   },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: space.md },
+  inputFocused: { borderColor: colors.daphne },
+  error: { color: colors.candy, fontSize: 15, marginBottom: space.md, lineHeight: 21 },
 });
