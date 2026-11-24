@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "tabr",
+    "slug": "tabr",
+    "scheme": "tabr",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#140805",
+    "ios": {
+      "bundleIdentifier": "com.rocketsolutions.tabr",
+      "supportsTablet": false,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.rocketsolutions.tabr",
+      "adaptiveIcon": {
+        "backgroundColor": "#140805",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#140805"
+        }
+      ],
+      "expo-sqlite",
+      [
+        "react-native-audio-api",
+        {
+          "iosBackgroundMode": false,
+          "iosMicrophonePermission": "tabr uses the microphone to hear your guitar so the tuner can tell you when each string is in tune.",
+          "androidPermissions": ["android.permission.RECORD_AUDIO", "android.permission.MODIFY_AUDIO_SETTINGS"],
+          "androidForegroundService": false
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
