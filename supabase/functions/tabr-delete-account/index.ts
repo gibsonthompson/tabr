@@ -9,6 +9,8 @@ const TABR_TABLES = [
   'tabr_integrations', // tokens cascade
   'tabr_curriculum_items',
   'tabr_curricula',
+  'tabr_lesson_attempts',
+  'tabr_mastery_evidence',
   'tabr_practice_items',
   'tabr_practice_sessions',
   'tabr_assessments',

@@ -1,6 +1,16 @@
 # tabr
 
-Native iOS guitar learning app (working name). Expo SDK 58, React Native 0.88, TypeScript, Expo Router, Supabase.
+Guitar learning app (working name). Desktop-first on the web, plus iPhone and Android from the same code. Expo SDK 58, React Native 0.88, TypeScript, Expo Router, Supabase.
+
+## Start Here
+
+The `docs/` folder is the source of truth for this project:
+
+- `docs/README.md`: how the education and engineering conversations work together
+- `docs/STATUS.md`: what's built, in progress and waiting on specs
+- `docs/DECISIONS.md`: architectural and product decisions
+- `docs/QUESTIONS.md`: open questions
+- `docs/context/`: the founding briefs, verbatim
 
 The earlier Vite web prototype lives in git history (commit `5d2bf82`). Its tab parser, chord library and tuner logic were ported into `src/lib/music`.
 
@@ -35,9 +45,9 @@ supabase/functions/      tabr-delete-account (deployed)
 
 | Area | Tables | Who writes |
 | --- | --- | --- |
-| Learning content | skills, skill_prerequisites, exercises, assessment_criteria | Server only. Users read published rows. |
-| Personal data | profiles, equipment, repertoire, practice_sessions, practice_items | The user, own rows only |
-| Progress evidence | skill_mastery, assessments | Server only. Users read their own. Mastery can't be self-awarded. |
+| Learning content | skills, skill_prerequisites, skill_relations, exercises, assessment_criteria, lessons, lesson_skills, lesson_components | Server only. Users read published rows. |
+| Personal data | profiles, equipment, repertoire, practice_sessions, practice_items, lesson_attempts | The user, own rows only |
+| Progress evidence | skill_mastery, mastery_evidence, assessments | Server only, except self-reported evidence. Users read their own. Mastery can't be self-awarded. |
 | Curriculum | curricula, curriculum_items | Server only. Users read their own. |
 | Integrations | integrations (status), integration_tokens, sync_events | Server only. Tokens and the sync outbox are never readable by the app. |
 

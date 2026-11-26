@@ -22,6 +22,27 @@ export type Profile = {
   handedness: 'right' | 'left';
   default_tuning: string;
   onboarding_completed_at: string | null;
+  // Self-reported guitarist profile (see src/lib/guitarist.ts). Never treated as demonstrated ability.
+  self_level: import('./guitarist').SelfLevel | null;
+  self_assessment: Record<string, import('./guitarist').SelfRating>;
+  favorite_songs: string[];
+  known_riffs: string[];
+  musical_identity: string | null;
+  goals: string[];
+  primary_goal: string | null;
+  frustrations: string | null;
+  previous_learning: string | null;
+  performance_experience: string | null;
+  listening_setup: import('./guitarist').ListeningSetup | null;
+  learning_preferences: { prefers?: string[] };
+  onboarding_step: number;
+};
+
+export type Equipment = {
+  id: string;
+  kind: string;
+  name: string;
+  details: Record<string, unknown>;
 };
 
 export type Skill = {
