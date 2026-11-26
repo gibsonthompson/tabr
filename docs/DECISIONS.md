@@ -68,7 +68,7 @@ Significant architectural and product decisions. Newest at the bottom. Entries a
 ## D-009: Mastery Levels, Criteria and Review Spacing
 
 - **Date:** 2026-11-25 · **Area:** Education · **Status:** Provisional
-- **Decision:** The database stores five levels (`exposure`, `recognition`, `demonstration`, `application`, `mastery`) matching the brief's proposed framework (Introduced, Recognized, Demonstrated, Applied, Internalized). Level names, definitions, criteria, assessment dimensions and review spacing are **not** finalized. No default review intervals, component catalog or dimension list is enforced (migration `20261125000300`).
+- **Decision:** The database stores five levels (`exposure`, `recognition`, `demonstration`, `application`, `mastery`) matching the brief's proposed framework (Introduced, Recognized, Demonstrated, Applied, Internalized). Level names, definitions, criteria, assessment dimensions and review spacing are **not** finalized. No default review intervals, component catalog or dimension list is enforced (migration `20261125000902`).
 - **Waiting on:** mastery and assessment spec, retention scheduling spec.
 
 ## D-010: tabr Profile Created by the App on Sign-In

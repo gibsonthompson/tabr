@@ -1,6 +1,6 @@
 -- Two-conversation workflow (see docs/README.md, decision D-016):
 -- educational values are decided by approved education specs, not by the schema.
--- This removes values that 20261125000200 had fixed ahead of any spec:
+-- This removes values that 20261125000608 had fixed ahead of any spec:
 --   * a default review spacing for skills
 --   * a fixed list of allowed lesson component types
 --   * a fixed list of assessment dimensions on evidence

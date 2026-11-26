@@ -10,6 +10,7 @@ This is an Expo/React Native application for desktop web, iPhone and Android. De
 4. After implementing anything significant: write or update an implementation report in `docs/implementation/`, update `docs/STATUS.md`, and log significant decisions in `docs/DECISIONS.md`, in the same commit as the code.
 5. Every new per-user `tabr_` table must also be added to `supabase/functions/tabr-delete-account/index.ts`.
 6. Use `src/lib/confirm.ts` for confirmations (React Native `Alert` does nothing on the web).
+7. Migration files in `supabase/migrations/` must be named with the exact version Supabase recorded when the migration ran (`select version, name from supabase_migrations.schema_migrations`). Migrations applied through the Supabase connection get a timestamp assigned by Supabase, so check it after applying and name the file to match. A mismatch makes the Supabase CLI think the migration never ran.
 
 ## Expo has changed: do not trust your training data
 
